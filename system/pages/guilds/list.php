@@ -38,6 +38,10 @@ if(count($guilds_list) > 0) {
 	}
 }
 
+if (isApiRequest()) {
+	jsonResponse(['guilds' => $guilds]);
+}
+
 $twig->display('guilds.list.html.twig', array(
 	'guilds' => $guilds,
 	'isAdmin' => admin(),

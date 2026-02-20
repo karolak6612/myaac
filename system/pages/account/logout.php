@@ -14,9 +14,16 @@ $title = 'Logout';
 require __DIR__ . '/base.php';
 
 if(!$logged) {
+	if (isApiRequest()) {
+		jsonResponse(['success' => true, 'message' => 'Not logged in.']);
+	}
 	return;
 }
 
 require SYSTEM . 'logout.php';
+
+if (isApiRequest()) {
+	jsonResponse(['success' => true, 'message' => 'Logged out successfully.']);
+}
 
 $twig->display('account.logout.html.twig');

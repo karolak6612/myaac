@@ -48,6 +48,12 @@ if(isset($_GET['archive']))
 				$author = $query['name'];
 			}
 
+			if (isApiRequest()) {
+				$news['author'] = $author;
+				$news['icon'] = $categories[$news['category']]['icon_id'];
+				jsonResponse(['news' => $news]);
+			}
+
 			$content_ = $news['body'];
 			$firstLetter = '';
 			if($content_[0] != '<')
@@ -73,8 +79,12 @@ if(isset($_GET['archive']))
 				'comments' => $news['comments'] != 0 ? getForumThreadLink($news['comments']) : null,
 			));
 		}
-		else
+		else {
+			if (isApiRequest()) {
+				jsonResponse(['error' => "This news doesn't exist or is hidden."], 404);
+			}
 			echo "This news doesn't exist or is hidden.<br/>";
+		}
 
 		$twig->display('news.back_button.html.twig');
 		return;
@@ -91,8 +101,13 @@ if(isset($_GET['archive']))
 			'link' => getLink('news/archive') . '/' . $news['id'],
 			'icon_id' => $categories[$news['category']]['icon_id'],
 			'title' => stripslashes($news['title']),
-			'date' => $news['date']
+			'date' => $news['date'],
+			'id' => $news['id']
 		);
+	}
+
+	if (isApiRequest()) {
+		jsonResponse(['archive' => $newses]);
 	}
 
 	$twig->display('news.archive.html.twig', array(
@@ -106,6 +121,57 @@ header('X-XSS-Protection: 0');
 $title = 'Latest News';
 
 $cache = Cache::getInstance();
+
+if (isApiRequest()) {
+	$response = [];
+
+	$categories = array();
+	foreach($db->query('SELECT `id`, `name`, `icon_id` FROM `' . TABLE_PREFIX . 'news_categories` WHERE `hide` != 1') as $cat)
+	{
+		$categories[$cat['id']] = array(
+			'name' => $cat['name'],
+			'icon_id' => $cat['icon_id']
+		);
+	}
+
+	$tickers_db = $db->query('SELECT * FROM `' . TABLE_PREFIX . 'news` WHERE `type` = ' . TICKER . ' AND `hide` != 1 ORDER BY `date` DESC LIMIT ' . setting('core.news_ticker_limit'));
+	$response['tickers'] = [];
+	if($tickers_db->rowCount() > 0)
+	{
+		$response['tickers'] = $tickers_db->fetchAll();
+		foreach($response['tickers'] as &$ticker) {
+			$ticker['icon'] = $categories[$ticker['category']]['icon_id'];
+			$ticker['body_short'] = short_text(strip_tags($ticker['body']), 100);
+			$ticker['hidden'] = $ticker['hide'];
+		}
+	}
+
+	$featured_article_db =$db->query('SELECT `id`, `title`, `article_text`, `article_image`, `hide` FROM `' . TABLE_PREFIX . 'news` WHERE `type` = ' . ARTICLE . ' AND `hide` != 1 ORDER BY `date` DESC LIMIT 1');
+
+	if($featured_article_db->rowCount() > 0) {
+		$response['article'] = $featured_article_db->fetch();
+	}
+
+	$newses = $db->query('SELECT * FROM ' . $db->tableName(TABLE_PREFIX . 'news') . ' WHERE type = ' . NEWS . ' AND hide != 1 ORDER BY date' . ' DESC LIMIT ' . setting('core.news_limit'));
+	$response['news'] = [];
+	if($newses->rowCount() > 0)
+	{
+		$response['news'] = $newses->fetchAll();
+		foreach($response['news'] as &$news)
+		{
+			$author = '';
+			$query = $db->query('SELECT `name` FROM `players` WHERE id = ' . $db->quote($news['player_id']) . ' LIMIT 1');
+			if($query->rowCount() > 0) {
+				$query = $query->fetch();
+				$author = $query['name'];
+			}
+			$news['author'] = $author;
+			$news['icon'] = $categories[$news['category']]['icon_id'];
+		}
+	}
+
+	jsonResponse($response);
+}
 
 $news_cached = false;
 if($cache->enabled())

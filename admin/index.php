@@ -70,6 +70,10 @@ if($hooks->trigger(HOOK_ADMIN_BEFORE_PAGE)) {
 $content .= ob_get_contents();
 ob_end_clean();
 
+if (isApiRequest()) {
+	jsonResponse(['content' => $content, 'page' => $page, 'status' => 'success']);
+}
+
 // template
 $template_path = 'template/';
 require __DIR__ . '/' . $template_path . 'template.php';

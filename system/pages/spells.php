@@ -64,6 +64,18 @@ else {
 	}
 }
 
+if (isApiRequest()) {
+	jsonResponse([
+		'spells' => $spells,
+		'vocation_id' => $vocation_id,
+		'vocation' => $vocation,
+		'vocations' => config('vocations'),
+		'config' => [
+			'item_images_url' => setting('core.item_images_url'),
+		]
+	]);
+}
+
 ?>
 <link rel="stylesheet" href="<?php echo BASE_URL; ?>tools/css/datatables.min.css">
 <?php

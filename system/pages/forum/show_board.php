@@ -22,12 +22,18 @@ $links_to_pages = '';
 $section_id = isset($_REQUEST['id']) ? (int) $_REQUEST['id'] : null;
 
 if($section_id == null || !isset($sections[$section_id])) {
+	if (isApiRequest()) {
+		jsonResponse(['error' => "Board with this id doesn't exist."], 404);
+	}
 	$errors[] = "Board with this id doesn't exist.";
 	displayErrorBoxWithBackButton($errors, getLink('forum'));
 	return;
 }
 
 if(!Forum::hasAccess($section_id)) {
+	if (isApiRequest()) {
+		jsonResponse(['error' => "You don't have access to this board."], 403);
+	}
 	$errors[] = "You don't have access to this board.";
 	displayErrorBoxWithBackButton($errors, getLink('forum'));
 	return;
@@ -51,6 +57,45 @@ if($logged && (!$sections[$section_id]['closed'] || Forum::isModerator())) {
 
 echo '<br /><br />Page: '.$links_to_pages.'<br />';
 $last_threads = $db->query("SELECT `players`.`id` as `player_id`, `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`first_post`, `" . FORUM_TABLE_PREFIX . "forum`.`post_text`, `" . FORUM_TABLE_PREFIX . "forum`.`post_topic`, `" . FORUM_TABLE_PREFIX . "forum`.`id`, `" . FORUM_TABLE_PREFIX . "forum`.`last_post`, `" . FORUM_TABLE_PREFIX . "forum`.`replies`, `" . FORUM_TABLE_PREFIX . "forum`.`views`, `" . FORUM_TABLE_PREFIX . "forum`.`post_date` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` AND `" . FORUM_TABLE_PREFIX . "forum`.`section` = ".$section_id." AND `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = `" . FORUM_TABLE_PREFIX . "forum`.`id` ORDER BY `" . FORUM_TABLE_PREFIX . "forum`.`last_post` DESC LIMIT ".setting('core.forum_threads_per_page')." OFFSET ".($_page * setting('core.forum_threads_per_page')))->fetchAll(PDO::FETCH_ASSOC);
+
+if (isApiRequest()) {
+	$threads_json = [];
+	foreach($last_threads as $thread) {
+		$thread_data = [
+			'id' => $thread['id'],
+			'topic' => $thread['post_topic'],
+			'author_name' => $thread['name'],
+			'replies' => (int)$thread['replies'],
+			'views' => (int)$thread['views'],
+			'last_post_date' => $thread['last_post'] > 0 ? $thread['last_post'] : $thread['post_date'],
+			'last_post_author' => $thread['name'], // default
+		];
+
+		if($thread['last_post'] > 0) {
+			$last_post = $db->query("SELECT `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`post_date` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = ".(int) $thread['id']." AND `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` ORDER BY `post_date` DESC LIMIT 1")->fetch();
+
+			if(isset($last_post['name'])) {
+				$thread_data['last_post_author'] = $last_post['name'];
+				$thread_data['last_post_date'] = $last_post['post_date'];
+			}
+		}
+
+		$threads_json[] = $thread_data;
+	}
+
+	jsonResponse([
+		'board' => [
+			'id' => $section_id,
+			'name' => $sections[$section_id]['name'],
+			'closed' => $sections[$section_id]['closed'],
+		],
+		'threads' => $threads_json,
+		'page' => $_page,
+		'total_pages' => ceil($threads_count['threads_count'] / setting('core.forum_threads_per_page')),
+		'can_post' => $logged && (!$sections[$section_id]['closed'] || Forum::isModerator())
+	]);
+}
+
 
 if(isset($last_threads[0])) {
 	echo '<table width="100%">

@@ -309,6 +309,21 @@ if ($highscoresTTL > 0 && $cache->enabled()) {
 	echo '<small>*Note: Highscores are updated every' . ($highscoresTTL > 1 ? ' ' . $highscoresTTL : '') . ' minute' . ($highscoresTTL > 1 ? 's' : '') . '.</small><br/><br/>';
 }
 
+if (isApiRequest()) {
+	jsonResponse([
+		'highscores' => $highscores,
+		'list' => $list,
+		'skill' => $skill,
+		'page' => $page,
+		'totalResults' => $totalResults,
+		'types' => $types,
+		'vocations' => config('vocations'),
+		'vocation' => $vocation,
+		'updatedAt' => $updatedAt ?? time(),
+		'perPage' => $configHighscoresPerPage
+	]);
+}
+
 /** @var Twig\Environment $twig */
 $twig->display('highscores.html.twig', [
 	'highscores' => $highscores,

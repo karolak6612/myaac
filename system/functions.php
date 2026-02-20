@@ -1765,6 +1765,25 @@ function getStatusUptimeReadable(int $uptime): string
 	return "{$y}{$m}{$d}{$hours}h {$min}m";
 }
 
+function isApiRequest()
+{
+    if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+        return true;
+    }
+    if (isset($_GET['api']) && $_GET['api'] == '1') {
+        return true;
+    }
+    return false;
+}
+
+function jsonResponse($data, $status = 200)
+{
+    http_response_code($status);
+    header('Content-Type: application/json');
+    echo json_encode($data);
+    exit;
+}
+
 // validator functions
 require_once SYSTEM . 'compat/base.php';
 

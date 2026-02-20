@@ -14,6 +14,14 @@ $title = 'Account Management';
 require __DIR__ . '/login.php';
 require __DIR__ . '/base.php';
 
+if (isApiRequest() && !$logged) {
+	$response = ['logged' => false];
+	if (isset($errors) && !empty($errors)) {
+		$response['errors'] = $errors;
+	}
+	jsonResponse($response);
+}
+
 if(!$logged) {
 	return;
 }
@@ -105,6 +113,49 @@ $players = array();
 /** @var OTS_Players_List $account_players */
 $account_players = $account_logged->getPlayersList();
 $account_players->orderBy('id');
+
+if (isApiRequest()) {
+	$players_data = [];
+	foreach($account_players as $player) {
+		$players_data[] = [
+			'id' => $player->getId(),
+			'name' => $player->getName(),
+			'level' => $player->getLevel(),
+			'vocation' => $player->getVocationName(),
+			'town_id' => $player->getTownId(),
+			'sex' => $player->getSex(),
+			'last_login' => $player->getLastLogin(),
+			'online' => $player->isOnline(),
+			'group_id' => $player->getGroupId(),
+			'hidden' => $player->isHidden(),
+			'skull' => $player->getSkull(),
+			//'link' => getPlayerLink($player->getName(), false)
+		];
+	}
+
+	jsonResponse([
+		'logged' => true,
+		'account' => [
+			'id' => $account_logged->getId(),
+			'name' => (USE_ACCOUNT_NAME ? $account_logged->getName() : (USE_ACCOUNT_NUMBER ? $account_logged->getNumber() : $account_logged->getId())),
+			'email' => $account_email,
+			'created' => $account_created,
+			'prem_days' => $premDays,
+			'is_premium' => $account_logged->isPremium(),
+			'rlname' => $account_rlname,
+			'location' => $account_location,
+			'recovery_key_set' => !empty($recovery_key),
+			'email_new_time' => $email_new_time,
+			'email_new' => isset($email_new) ? $email_new : '',
+		],
+		'players' => $players_data,
+		'actions' => $actions,
+		'config' => [
+			'free_premium' => $freePremium,
+			'vip_system_enabled' => $vipSystemEnabled
+		]
+	]);
+}
 
 $twig->display('account.management.html.twig', array(
 	'welcome_message' => $welcome_message,

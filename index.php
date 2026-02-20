@@ -30,6 +30,26 @@ use MyAAC\Visitors;
 require_once 'common.php';
 require_once SYSTEM . 'functions.php';
 
+// Check if we should serve the Svelte SPA
+if (!isApiRequest()) {
+    // If it's a static file request, let web server handle it or return 404
+    if(preg_match("/^(.*)\.(gif|jpg|png|jpeg|tiff|bmp|css|js|less|map|html|zip|rar|gz|ttf|woff|ico)$/i", $_SERVER['REQUEST_URI'])) {
+        // Only return 404 if the file really doesn't exist
+        // This allows existing assets to be served
+        if (!file_exists(BASE . $_SERVER['REQUEST_URI'])) {
+            http_response_code(404);
+            exit;
+        }
+    }
+    else {
+        // Serve Svelte App for non-static, non-API requests
+        if (file_exists(BASE . 'index.html')) {
+            require BASE . 'index.html';
+            exit;
+        }
+    }
+}
+
 $uri = $_SERVER['REQUEST_URI'];
 if(str_contains($uri, 'index.php')) {
 	$uri = str_replace_first('/index.php', '', $uri);
@@ -52,11 +72,6 @@ if(preg_match("/^[A-Za-z0-9-_%'+\/]+\.png$/i", $uri)) {
 	chdir(TOOLS . 'signature');
 	include TOOLS . 'signature/index.php';
 	exit();
-}
-
-if(preg_match("/^(.*)\.(gif|jpg|png|jpeg|tiff|bmp|css|js|less|map|html|zip|rar|gz|ttf|woff|ico)$/i", $_SERVER['REQUEST_URI'])) {
-	http_response_code(404);
-	exit;
 }
 
 if((!isset($config['installed']) || !$config['installed']) && file_exists(BASE . 'install'))
@@ -160,6 +175,10 @@ if(setting('core.anonymous_usage_statistics')) {
 			$cache->set('last_usage_report', time(), 60 * 60);
 		}
 	}
+}
+
+if (isApiRequest()) {
+    jsonResponse(['content' => $content, 'title' => $title ?? '', 'status' => 'success']);
 }
 
 $title_full =  (isset($title) ? $title . ' - ' : '') . $config['lua']['serverName'];

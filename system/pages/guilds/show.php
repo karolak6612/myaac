@@ -150,6 +150,61 @@ if ($db->hasTableAndColumns('guild_invites', ['player_id'])) {
 
 $useGuildNick = $db->hasTable('guild_members') || $db->hasTable('guild_membership') || $db->hasColumn('players', 'guildnick');
 
+if (isApiRequest()) {
+	// Format guild members for JSON
+	$members_json = [];
+	foreach($guild_members as $rank_group) {
+		$group = [
+			'rank_name' => $rank_group['rank_name'],
+			'rank_level' => $rank_group['rank_level'],
+			'members' => []
+		];
+		/** @var OTS_Player $player */
+		foreach($rank_group['members'] as $player) {
+			$group['members'][] = [
+				'name' => $player->getName(),
+				'level' => $player->getLevel(),
+				'vocation' => $player->getVocationName(),
+				'online' => $player->isOnline(),
+				// ... other details
+			];
+		}
+		$members_json[] = $group;
+	}
+
+	// Format invited list
+	$invites_json = [];
+	foreach($invited_list as $invite) {
+		$invites_json[] = [
+			'name' => $invite->getName()
+		];
+	}
+
+	jsonResponse([
+		'guild' => [
+			'id' => $guild->getId(),
+			'name' => $guild_name,
+			'logo' => $guild_logo,
+			'description' => $description,
+			'owner' => $guild_owner->isLoaded() ? $guild_owner->getName() : null,
+			'creation_date' => $guild->getCreationData(),
+			'creation_date_formatted' => date("j F Y", $guild->getCreationData()),
+		],
+		'members' => $members_json,
+		'invites' => $invites_json,
+		'user_relation' => [
+			'is_leader' => $guild_leader,
+			'is_vice' => $guild_vice,
+			'level_in_guild' => $level_in_guild,
+			'players_in_guild' => $players_from_account_in_guild,
+			'show_accept_invite' => $show_accept_invite
+		],
+		'config' => [
+			'use_guild_nick' => $useGuildNick
+		]
+	]);
+}
+
 $twig->display('guilds.view.html.twig', array(
 	'logo' => $guild_logo,
 	'guild' => $guild,

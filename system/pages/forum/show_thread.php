@@ -24,12 +24,18 @@ $_page = (int) ($_REQUEST['page'] ?? 0);
 $thread_starter = $db->query("SELECT `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`post_topic`, `" . FORUM_TABLE_PREFIX . "forum`.`section` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = ".(int) $thread_id." AND `" . FORUM_TABLE_PREFIX . "forum`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`first_post` AND `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` LIMIT 1")->fetch();
 
 if(empty($thread_starter['name'])) {
+	if (isApiRequest()) {
+		jsonResponse(['error' => 'Thread with this ID does not exists.'], 404);
+	}
 	$errors[] = 'Thread with this ID does not exists.';
 	displayErrorBoxWithBackButton($errors, getLink('forum'));
 	return;
 }
 
 if(!Forum::hasAccess($thread_starter['section'])) {
+	if (isApiRequest()) {
+		jsonResponse(['error' => "You don't have access to view this thread."], 403);
+	}
 	$errors[] = "You don't have access to view this thread.";
 	displayErrorBoxWithBackButton($errors, getLink('forum'));
 	return;
@@ -97,6 +103,46 @@ foreach($posts as &$post) {
 			$post['edited_by'] = $player->getName();
 		}
 	}
+}
+
+if (isApiRequest()) {
+	$posts_json = [];
+	foreach($posts as $post) {
+		$posts_json[] = [
+			'id' => $post['id'],
+			'content' => $post['content'],
+			'date' => $post['date'],
+			'author' => [
+				'name' => $post['player']->getName(),
+				'vocation' => $post['vocation'],
+				'level' => $post['player']->getLevel(),
+				'group' => $post['group'],
+				'posts_count' => $post['author_posts_count'],
+				'outfit' => isset($post['outfit']) ? $post['outfit'] : null,
+				'guild_rank' => isset($post['guildRank']) ? strip_tags($post['guildRank']) : null
+			],
+			'edited' => isset($post['edited_by']) ? [
+				'by' => $post['edited_by'],
+				'date' => $post['edit_date']
+			] : null
+		];
+	}
+
+	jsonResponse([
+		'thread' => [
+			'id' => $thread_id,
+			'topic' => $thread_starter['post_topic'],
+			'starter' => $thread_starter['name'],
+			'section' => [
+				'id' => $thread_starter['section'],
+				'name' => $sections[$thread_starter['section']]['name']
+			]
+		],
+		'posts' => $posts_json,
+		'page' => $_page,
+		'total_pages' => ceil($posts_count['posts_count'] / setting('core.forum_posts_per_page')),
+		'is_moderator' => Forum::isModerator()
+	]);
 }
 
 $twig->display('forum.show_thread.html.twig', array(

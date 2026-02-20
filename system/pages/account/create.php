@@ -20,6 +20,9 @@ if (setting('core.account_country'))
 
 if($logged)
 {
+	if (isApiRequest()) {
+		jsonResponse(['error' => 'Please logout before attempting to create a new account.'], 403);
+	}
 	echo 'Please logout before attempting to create a new account.';
 	return;
 }
@@ -260,6 +263,9 @@ if($save)
 
 			if(_mail($email, 'New account on ' . $config['lua']['serverName'], $body_html))
 			{
+				if (isApiRequest()) {
+					jsonResponse(['success' => true, 'message' => 'Account created. Please verify your email.', 'verify_email' => true]);
+				}
 				echo 'Your account has been created.<br/><br/>';
 
 				warning("Before you can login - you need to verify your E-Mail. The verification link has been sent to $email. If the message is not coming - remember to check the SPAM folder.");
@@ -274,6 +280,9 @@ if($save)
 			}
 			else
 			{
+				if (isApiRequest()) {
+					jsonResponse(['error' => 'An error occurred while sending email! Account not created.'], 500);
+				}
 				error('An error occurred while sending email! Account not created. Try again. For Admin: More info can be found in system/logs/mailer-error.log');
 				$new_account->delete();
 
@@ -309,6 +318,9 @@ if($save)
 				echo ' Now you can login and create your first character.';
 			}
 
+			if (isApiRequest()) {
+				jsonResponse(['success' => true, 'message' => 'Account created successfully.']);
+			}
 			echo ' See you in Tibia!<br/><br/>';
 			$twig->display('success.html.twig', array(
 				'title' => 'Account Created',
@@ -336,6 +348,9 @@ if($save)
 			// character creation
 			$character_created = $createCharacter->doCreate($character_name, $character_sex, $character_vocation, $character_town, $new_account, $errors);
 			if (!$character_created) {
+				if (isApiRequest()) {
+					jsonResponse(['success' => true, 'message' => 'Account created, but error creating character.', 'errors' => $errors]);
+				}
 				error('There was an error creating your character. Please create your character later in account management page.');
 				error(implode(' ', $errors));
 			}
@@ -362,8 +377,12 @@ if(setting('core.account_country_recognize')) {
 	}
 }
 
-if(!empty($errors))
+if(!empty($errors)) {
+	if (isApiRequest()) {
+		jsonResponse(['errors' => $errors], 400);
+	}
 	$twig->display('error_box.html.twig', array('errors' => $errors));
+}
 
 if (setting('core.account_country')) {
 	$countries = array();
@@ -395,6 +414,20 @@ if($save && setting('core.account_create_character_create')) {
 		'vocation' => $character_vocation,
 		'town' => $character_town
 	));
+}
+
+if (isApiRequest()) {
+	jsonResponse([
+		'countries' => $countries ?? null,
+		'country_recognized' => $country_recognized,
+		'config' => [
+			'account_login_by_email' => config('account_login_by_email'),
+			'use_account_name' => defined('USE_ACCOUNT_NAME') && USE_ACCOUNT_NAME,
+			'create_character' => setting('core.account_create_character_create'),
+			'towns' => config('towns'),
+			'vocations' => config('vocations'),
+		]
+	]);
 }
 
 $twig->display('account.create.html.twig', $params);

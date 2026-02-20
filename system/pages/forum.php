@@ -65,6 +65,10 @@ foreach($sections as $id => $section)
 	}
 }
 
+if (isApiRequest()) {
+	jsonResponse(['boards' => $boards]);
+}
+
 $twig->display('forum.boards.html.twig', array(
 	'boards' => $boards,
 	'canEdit' => $canEdit,
