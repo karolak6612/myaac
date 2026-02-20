@@ -116,22 +116,26 @@ $account_players->orderBy('id');
 
 if (isApiRequest()) {
 	$players_data = [];
-	foreach($account_players as $player) {
-		$players_data[] = [
-			'id' => $player->getId(),
-			'name' => $player->getName(),
-			'level' => $player->getLevel(),
-			'vocation' => $player->getVocationName(),
-			'town_id' => $player->getTownId(),
-			'sex' => $player->getSex(),
-			'last_login' => $player->getLastLogin(),
-			'online' => $player->isOnline(),
-			'group_id' => $player->getGroupId(),
-			'hidden' => $player->isHidden(),
-			'skull' => $player->getSkull(),
-			//'link' => getPlayerLink($player->getName(), false)
-		];
-	}
+    try {
+        foreach($account_players as $player) {
+            $players_data[] = [
+                'id' => $player->getId(),
+                'name' => $player->getName(),
+                'level' => $player->getLevel(),
+                'vocation' => $player->getVocationName(),
+                'town_id' => $player->getTownId(),
+                'sex' => $player->getSex(),
+                'last_login' => $player->getLastLogin(),
+                'online' => $player->isOnline(),
+                'group_id' => $player->getGroupId(),
+                'hidden' => $player->isHidden(),
+                'skull' => $player->getSkull(),
+                //'link' => getPlayerLink($player->getName(), false)
+            ];
+        }
+    } catch(E_OTS_NotLoaded $e) {
+        jsonResponse(['logged' => true, 'error' => 'Failed to load player data'], 500);
+    }
 
 	jsonResponse([
 		'logged' => true,

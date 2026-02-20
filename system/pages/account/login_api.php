@@ -8,6 +8,12 @@ if (!isRequestMethod('post')) {
 require SYSTEM . 'pages/account/login.php';
 
 if ($logged) {
+    $account_rlname = $account_logged->getRLName();
+    $account_location = $account_logged->getLocation();
+    $recovery_key = $account_logged->getCustomField('key');
+    $email_new_time = (int)$account_logged->getCustomField("email_new_time");
+    $email_new = ($email_new_time > 1) ? $account_logged->getCustomField("email_new") : '';
+
     $response = [
         'logged' => true,
         'account' => [
@@ -18,6 +24,11 @@ if ($logged) {
             'prem_days' => $account_logged->getPremDays(),
             'is_premium' => $account_logged->isPremium(),
             'is_admin' => admin(),
+            'rlname' => $account_rlname,
+            'location' => $account_location,
+            'recovery_key_set' => !empty($recovery_key),
+            'email_new_time' => $email_new_time,
+            'email_new' => $email_new,
         ]
     ];
     jsonResponse($response);

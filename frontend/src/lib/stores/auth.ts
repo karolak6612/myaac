@@ -7,6 +7,7 @@ export interface User {
   created: number;
   prem_days: number;
   is_premium: boolean;
+  is_admin: boolean;
   rlname: string;
   location: string;
   recovery_key_set: boolean;

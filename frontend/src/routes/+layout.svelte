@@ -18,6 +18,9 @@
             loggedIn.set(false);
             user.set(null);
         }
+      } else {
+          loggedIn.set(false);
+          user.set(null);
       }
     } catch (e) {
       console.error(e);

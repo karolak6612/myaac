@@ -2,8 +2,9 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { base } from '$app/paths';
-  import DOMPurify from 'dompurify';
 
+  /** @type {any} */
+  let DOMPurify;
   let threadData = null;
   let error = '';
   let loading = true;
@@ -16,6 +17,11 @@
       currentPage = 0;
       loadData(0);
   }
+
+  onMount(async () => {
+    const module = await import('dompurify');
+    DOMPurify = module.default;
+  });
 
   async function loadData(pageIndex = 0) {
     if (abortController) abortController.abort();
@@ -69,7 +75,7 @@
                 {/if}
                  {#if post.author.outfit}
                     <div class="my-2 flex justify-center md:justify-start">
-                        {@html DOMPurify.sanitize(post.author.outfit)}
+                        {@html DOMPurify ? DOMPurify.sanitize(post.author.outfit) : ''}
                     </div>
                 {/if}
                 <div class="text-xs text-gray-500">Posts: {post.author.posts_count}</div>
@@ -80,7 +86,7 @@
                     <span>#{post.id}</span>
                 </div>
                 <div class="prose max-w-none flex-grow">
-                    {@html DOMPurify.sanitize(post.content)}
+                    {@html DOMPurify ? DOMPurify.sanitize(post.content) : ''}
                 </div>
                 {#if post.edited}
                     <div class="mt-4 pt-2 border-t text-xs text-gray-400 italic">

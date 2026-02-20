@@ -10,7 +10,7 @@
   let currentPage = 'dashboard';
   let error = '';
 
-  $: if (!$loading && !$loggedIn) {
+  $: if (!$loading && (!$loggedIn || !$user?.is_admin)) {
     goto('/account/login');
   }
 
