@@ -41,7 +41,7 @@ function getTickersData($limit) {
                 'body' => $ticker['body'],
                 'date' => $ticker['date'],
                 'category' => $ticker['category'],
-                'icon' => $categories[$ticker['category']]['icon_id'],
+                'icon' => isset($categories[$ticker['category']]) ? $categories[$ticker['category']]['icon_id'] : 0,
                 'body_short' => short_text(strip_tags($ticker['body']), 100),
                 'hide' => $ticker['hide']
             ];
@@ -84,7 +84,7 @@ function getNewsData($limit) {
                 'body' => $news['body'],
                 'date' => $news['date'],
                 'category' => $news['category'],
-                'icon' => $categories[$news['category']]['icon_id'],
+                'icon' => isset($categories[$news['category']]) ? $categories[$news['category']]['icon_id'] : 0,
                 'comments' => $news['comments'],
                 'hide' => $news['hide']
             ];

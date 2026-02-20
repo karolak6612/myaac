@@ -25,7 +25,7 @@
         const data = await response.json();
         content = data.content;
         currentPage = data.page;
-
+        error = '';
       } else {
         error = 'Failed to load admin page.';
       }

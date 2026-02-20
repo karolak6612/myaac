@@ -13,7 +13,7 @@
 
   $: id = $page.params.id;
 
-  $: if (id) {
+  $: if (id && DOMPurify) {
       currentPage = 0;
       loadData(0);
   }

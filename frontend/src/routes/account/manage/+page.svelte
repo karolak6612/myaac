@@ -4,9 +4,12 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
 
-  let accountData = null;
-  let players = [];
-  let error = '';
+  /** @type {{ accountData: any, players: any[], error: string }} */
+  let state = $state({
+      accountData: null,
+      players: [],
+      error: ''
+  });
 
   $effect(() => {
     if (!loading.value && !loggedIn.value) {
@@ -20,8 +23,8 @@
       if (response.ok) {
         const data = await response.json();
         if (data.logged) {
-          accountData = data.account;
-          players = data.players || [];
+          state.accountData = data.account;
+          state.players = data.players || [];
           user.value = data.account;
           loggedIn.value = true;
         } else {
@@ -29,11 +32,11 @@
             goto(`${base}/account/login`);
         }
       } else {
-        error = 'Failed to load account data.';
+        state.error = 'Failed to load account data.';
       }
     } catch (e) {
       console.error(e);
-      error = 'Failed to load account data.';
+      state.error = 'Failed to load account data.';
     }
   });
 
@@ -45,6 +48,9 @@
       if (res.ok) {
           const data = await res.json();
           csrf_token = data.csrf_token;
+      } else {
+          state.error = 'Failed to logout: could not fetch CSRF token.';
+          return;
       }
 
       const formData = new FormData();
@@ -59,30 +65,38 @@
         loggedIn.value = false;
         user.value = null;
         goto(`${base}/`);
+      } else {
+          try {
+              const data = await response.json();
+              state.error = data.message || 'Failed to logout.';
+          } catch (e) {
+              state.error = 'Failed to logout.';
+          }
       }
     } catch (e) {
       console.error(e);
+      state.error = 'Failed to logout.';
     }
   }
 </script>
 
 {#if loading.value}
   <p>Loading...</p>
-{:else if loggedIn.value && accountData}
-  <h1>Welcome, {accountData.name}</h1>
+{:else if loggedIn.value && state.accountData}
+  <h1>Welcome, {state.accountData.name}</h1>
   <button on:click={logout}>Logout</button>
 
   <h2>Account Status</h2>
-  <p>Status: {accountData.is_premium ? 'Premium' : 'Free Account'}</p>
-  <p>Premium Days: {accountData.prem_days}</p>
-  <p>Email: {accountData.email}</p>
+  <p>Status: {state.accountData.is_premium ? 'Premium' : 'Free Account'}</p>
+  <p>Premium Days: {state.accountData.prem_days}</p>
+  <p>Email: {state.accountData.email}</p>
 
   <h2>Characters</h2>
-  {#if players.length === 0}
+  {#if state.players.length === 0}
     <p>No characters created yet.</p>
   {:else}
     <ul>
-      {#each players as player}
+      {#each state.players as player}
         <li>
           <strong>{player.name}</strong> - Level {player.level}, {player.vocation}
           <br/>
@@ -91,6 +105,6 @@
       {/each}
     </ul>
   {/if}
-{:else if error}
-  <p class="text-red-500">{error}</p>
+{:else if state.error}
+  <p class="text-red-500">{state.error}</p>
 {/if}

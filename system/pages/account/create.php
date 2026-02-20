@@ -245,6 +245,14 @@ if($save)
 			$tmp_account = (USE_ACCOUNT_NAME ? $account_name : $account_id);
 		}
 
+		$successTemplateParams = array(
+			'title' => 'Account Created',
+			'description' => 'Your account ' . $account_type . ' is <b>' . $tmp_account . '</b><br/>You will need the account ' . $account_type . ' and your password to play on ' . configLua('serverName') . '.
+					Please keep your account ' . $account_type . ' and password in a safe place and
+					never give your account ' . $account_type . ' or password to anybody.',
+			'custom_buttons' => setting('core.account_create_character_create') ? '' : null
+		);
+
 		if(setting('core.mail_enabled') && setting('core.account_mail_verify'))
 		{
 			$hash = md5(generateRandomString(16, true, true) . $email);
@@ -270,13 +278,7 @@ if($save)
 
 				warning("Before you can login - you need to verify your E-Mail. The verification link has been sent to $email. If the message is not coming - remember to check the SPAM folder.");
 
-				$twig->display('success.html.twig', array(
-					'title' => 'Account Created',
-					'description' => 'Your account ' . $account_type . ' is <b>' . $tmp_account . '</b><br/>You will need the account ' . $account_type . ' and your password to play on ' . configLua('serverName') . '.
-						Please keep your account ' . $account_type . ' and password in a safe place and
-						never give your account ' . $account_type . ' or password to anybody.',
-					'custom_buttons' => setting('core.account_create_character_create') ? '' : null
-				));
+				$twig->display('success.html.twig', $successTemplateParams);
 			}
 			else
 			{
@@ -323,13 +325,7 @@ if($save)
 			}
 
 			echo ' See you in Tibia!<br/><br/>';
-			$twig->display('success.html.twig', array(
-				'title' => 'Account Created',
-				'description' => 'Your account ' . $account_type . ' is <b>' . $tmp_account . '</b><br/>You will need the account ' . $account_type . ' and your password to play on ' . configLua('serverName') . '.
-						Please keep your account ' . $account_type . ' and password in a safe place and
-						never give your account ' . $account_type . ' or password to anybody.',
-				'custom_buttons' => setting('core.account_create_character_create') ? '' : null
-			));
+			$twig->display('success.html.twig', $successTemplateParams);
 
 			if(setting('core.mail_enabled') && setting('core.account_welcome_mail'))
 			{
@@ -395,7 +391,9 @@ if (setting('core.account_country')) {
 		$countries[$code] = $c;
 }
 
-$twig->display('account.create.js.html.twig');
+if (!isApiRequest()) {
+    $twig->display('account.create.js.html.twig');
+}
 
 $params = array(
 	'account' => isset($_POST['account']) ? $_POST['account'] : '',

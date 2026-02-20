@@ -59,7 +59,8 @@ foreach($sections as $id => $section)
 			'last_post' => array(
 				'name' => isset($last_post['name']) ? $last_post['name'] : null,
 				'date' => isset($last_post['post_date']) ? $last_post['post_date'] : null,
-				'player_link' => isset($last_post['name']) ? getPlayerLink($last_post['name'], false) : null,
+				'player_link' => isset($last_post['name']) ? getPlayerLink($last_post['name'], true) : null,
+				'player_url' => isset($last_post['name']) ? getPlayerLink($last_post['name'], false) : null,
 			)
 		);
 	}

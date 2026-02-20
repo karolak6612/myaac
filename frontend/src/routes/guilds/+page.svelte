@@ -44,7 +44,13 @@
     {#each guilds as guild}
       <li class="border rounded p-4 shadow bg-white hover:bg-gray-50 transition">
         <a href="{base}/guilds/{encodeURIComponent(guild.name)}" class="flex flex-col items-center text-center">
-          <img src="{base}/images/guilds/{guild.logo}" alt="{guild.name} logo" class="w-16 h-16 object-cover mb-2" />
+          {#if guild.logo}
+            <img src="{base}/images/guilds/{guild.logo}" alt="{guild.name} logo" class="w-16 h-16 object-cover mb-2" />
+          {:else}
+             <div class="w-16 h-16 bg-gray-200 mb-2 flex items-center justify-center rounded">
+                 <span class="text-gray-400 text-xs">No Logo</span>
+             </div>
+          {/if}
           <h2 class="text-xl font-bold">{guild.name}</h2>
         </a>
         <div class="mt-2 text-sm text-gray-600">

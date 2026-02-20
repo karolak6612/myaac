@@ -33,23 +33,10 @@ if ($logged) {
             ]
         ];
     } catch (E_OTS_NotLoaded $e) {
-        $response = [
-            'logged' => true,
-            'account' => [
-                'id' => 0,
-                'name' => '',
-                'email' => '',
-                'created' => 0,
-                'prem_days' => 0,
-                'is_premium' => false,
-                'is_admin' => false,
-                'rlname' => '',
-                'location' => '',
-                'recovery_key_set' => false,
-                'email_new_time' => 0,
-                'email_new' => '',
-            ]
-        ];
+        jsonResponse([
+            'logged' => false,
+            'error' => 'Failed to load account.',
+        ], 500);
     }
     jsonResponse($response);
 } else {

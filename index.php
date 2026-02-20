@@ -38,7 +38,8 @@ if (!isApiRequest()) {
 
         // Only return 404 if the file really doesn't exist
         // This allows existing assets to be served
-        if (!$requestedPath || strpos($requestedPath, realpath(BASE)) !== 0 || !file_exists($requestedPath)) {
+        $basePath = rtrim(realpath(BASE), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (!$requestedPath || strpos($requestedPath, $basePath) !== 0 || !file_exists($requestedPath)) {
             http_response_code(404);
             exit;
         }
@@ -180,7 +181,7 @@ if(setting('core.anonymous_usage_statistics')) {
 }
 
 if (isApiRequest()) {
-    jsonResponse(['content' => $content, 'title' => $title ?? '', 'status' => 'success']);
+    jsonResponse(['content' => $content ?? '', 'title' => $title ?? '', 'status' => 'success']);
 }
 
 $title_full =  (isset($title) ? $title . ' - ' : '') . $config['lua']['serverName'];
