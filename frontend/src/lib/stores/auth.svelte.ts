@@ -1,5 +1,3 @@
-import { writable } from 'svelte/store';
-
 export interface User {
   id: number;
   name: string;
@@ -15,6 +13,6 @@ export interface User {
   email_new: string;
 }
 
-export const user = writable<User | null>(null);
-export const loggedIn = writable(false);
-export const loading = writable(true);
+export const user = $state({ value: null as User | null });
+export const loggedIn = $state({ value: false });
+export const loading = $state({ value: true });

@@ -19,7 +19,7 @@ if (isApiRequest() && !$logged) {
 	if (isset($errors) && !empty($errors)) {
 		$response['errors'] = $errors;
 	}
-	jsonResponse($response);
+	jsonResponse($response, 401);
 }
 
 if(!$logged) {
@@ -78,7 +78,7 @@ else
 
 $account_created = $account_logged->getCreated();
 $account_email = $account_logged->getEMail();
-$email_new_time = $account_logged->getCustomField("email_new_time");
+$email_new_time = (int)$account_logged->getCustomField("email_new_time");
 if($email_new_time > 1)
 	$email_new = $account_logged->getCustomField("email_new");
 $account_rlname = $account_logged->getRLName();
