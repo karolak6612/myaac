@@ -22,5 +22,9 @@
 		"tailwindcss": "^3.4.19",
 		"typescript": "^5.9.3",
 		"vite": "^7.3.1"
+	},
+	"dependencies": {
+		"@types/dompurify": "^3.0.5",
+		"dompurify": "^3.3.1"
 	}
 }

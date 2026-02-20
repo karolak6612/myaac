@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { base } from '$app/paths';
+  import DOMPurify from 'dompurify';
 
   let guildData = null;
   let loading = true;
@@ -44,7 +45,7 @@
 
         <section class="mb-8 bg-white p-6 rounded shadow">
             <h2 class="text-2xl font-bold mb-4">Description</h2>
-            <div class="prose max-w-none">{@html guildData.guild.description}</div>
+            <div class="prose max-w-none">{@html DOMPurify.sanitize(guildData.guild.description)}</div>
         </section>
 
         <section class="mb-8">

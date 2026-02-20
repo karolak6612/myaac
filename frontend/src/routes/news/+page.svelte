@@ -1,5 +1,6 @@
 <script>
     import { base } from '$app/paths';
+    import DOMPurify from 'dompurify';
     export let data;
 
     $: ({ newsData } = data);
@@ -37,7 +38,7 @@
             <img src="{base}/{article.article_image}" alt="Article Image" class="mb-4 w-full h-auto" />
         {/if}
         <div class="prose max-w-none">
-            {@html article.article_text}
+            {@html DOMPurify.sanitize(article.article_text)}
         </div>
     </article>
 {/if}
@@ -58,7 +59,7 @@
                 </div>
             </header>
             <div class="prose max-w-none">
-                {@html item.body}
+                {@html DOMPurify.sanitize(item.body)}
             </div>
             {#if item.comments}
                 <div class="mt-4 pt-2 border-t text-sm text-right">

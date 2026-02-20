@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { base } from '$app/paths';
+  import DOMPurify from 'dompurify';
 
   let guilds = [];
   let error = '';
@@ -41,7 +42,7 @@
           <h2 class="text-xl font-bold">{guild.name}</h2>
         </a>
         <div class="mt-2 text-sm text-gray-600">
-            {@html guild.description}
+            {@html DOMPurify.sanitize(guild.description)}
         </div>
       </li>
     {/each}
