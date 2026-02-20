@@ -14,19 +14,104 @@ use MyAAC\News;
 
 defined('MYAAC') or die('Direct access not allowed!');
 
+function getNewsCategories() {
+    global $db;
+    $categories = array();
+    foreach($db->query('SELECT `id`, `name`, `icon_id` FROM `' . TABLE_PREFIX . 'news_categories` WHERE `hide` != 1') as $cat)
+    {
+        $categories[$cat['id']] = array(
+            'name' => $cat['name'],
+            'icon_id' => $cat['icon_id']
+        );
+    }
+    return $categories;
+}
+
+function getTickersData($limit) {
+    global $db, $categories;
+    $tickers_db = $db->query('SELECT * FROM `' . TABLE_PREFIX . 'news` WHERE `type` = ' . TICKER . ' AND `hide` != 1 ORDER BY `date` DESC LIMIT ' . $limit);
+    $data = [];
+    if($tickers_db->rowCount() > 0)
+    {
+        $raw_tickers = $tickers_db->fetchAll();
+        foreach($raw_tickers as $ticker) {
+            $data[] = [
+                'id' => $ticker['id'],
+                'title' => $ticker['title'],
+                'body' => $ticker['body'],
+                'date' => $ticker['date'],
+                'category' => $ticker['category'],
+                'icon' => $categories[$ticker['category']]['icon_id'],
+                'body_short' => short_text(strip_tags($ticker['body']), 100),
+                'hide' => $ticker['hide']
+            ];
+        }
+    }
+    return $data;
+}
+
+function getFeaturedArticleData() {
+    global $db;
+    $featured_article_db =$db->query('SELECT `id`, `title`, `article_text`, `article_image`, `hide` FROM `' . TABLE_PREFIX . 'news` WHERE `type` = ' . ARTICLE . ' AND `hide` != 1 ORDER BY `date` DESC LIMIT 1');
+    if($featured_article_db->rowCount() > 0) {
+        $article = $featured_article_db->fetch();
+        return [
+            'id' => $article['id'],
+            'title' => $article['title'],
+            'text' => $article['article_text'],
+            'image' => $article['article_image'],
+            'hide' => $article['hide'],
+            'read_more' => getLink('news/archive/') . $article['id']
+        ];
+    }
+    return null;
+}
+
+function getNewsData($limit) {
+    global $db, $categories;
+    $newses = $db->query('SELECT * FROM ' . $db->tableName(TABLE_PREFIX . 'news') . ' WHERE type = ' . NEWS . ' AND hide != 1 ORDER BY date' . ' DESC LIMIT ' . $limit);
+    $data = [];
+    if($newses->rowCount() > 0)
+    {
+        $raw_news = $newses->fetchAll();
+        foreach($raw_news as $news)
+        {
+            $author = '';
+            if (setting('core.news_author')) {
+                $query = $db->query('SELECT `name` FROM `players` WHERE id = ' . $db->quote($news['player_id']) . ' LIMIT 1');
+                if($query->rowCount() > 0) {
+                    $query = $query->fetch();
+                    $author = $query['name'];
+                }
+            }
+
+            $item = [
+                'id' => $news['id'],
+                'title' => stripslashes($news['title']),
+                'body' => $news['body'],
+                'date' => $news['date'],
+                'category' => $news['category'],
+                'icon' => $categories[$news['category']]['icon_id'],
+                'comments' => $news['comments'],
+                'hide' => $news['hide']
+            ];
+
+            if (setting('core.news_author')) {
+                $item['author'] = $author;
+            }
+
+            $data[] = $item;
+        }
+    }
+    return $data;
+}
+
 $canEdit = hasFlag(FLAG_CONTENT_NEWS) || superAdmin();
+$categories = getNewsCategories();
+
 if(isset($_GET['archive']))
 {
 	$title = 'News Archive';
-
-	$categories = array();
-	foreach($db->query('SELECT id, name, icon_id FROM ' . TABLE_PREFIX . 'news_categories WHERE hide != 1') as $cat)
-	{
-		$categories[$cat['id']] = array(
-			'name' => $cat['name'],
-			'icon_id' => $cat['icon_id']
-		);
-	}
 
 	// display big news by id
 	if(isset($_GET['id']))
@@ -42,24 +127,28 @@ if(isset($_GET['archive']))
 		{
 			$news = $news->fetch();
 			$author = '';
-			$query = $db->query('SELECT `name` FROM `players` WHERE id = ' . $db->quote($news['player_id']) . ' LIMIT 1;');
-			if($query->rowCount() > 0) {
-				$query = $query->fetch();
-				$author = $query['name'];
-			}
+            if (setting('core.news_author')) {
+                $query = $db->query('SELECT `name` FROM `players` WHERE id = ' . $db->quote($news['player_id']) . ' LIMIT 1;');
+                if($query->rowCount() > 0) {
+                    $query = $query->fetch();
+                    $author = $query['name'];
+                }
+            }
 
 			if (isApiRequest()) {
-				jsonResponse(['news' => [
+                $response = [
 					'id' => $news['id'],
-					'title' => $news['title'],
+					'title' => stripslashes($news['title']),
 					'body' => $news['body'],
 					'date' => $news['date'],
 					'category' => $news['category'],
-					'author' => $author,
 					'icon' => $categories[$news['category']]['icon_id'],
 					'comments' => $news['comments'],
-					'hide' => $news['hide']
-				]]);
+				];
+                if (setting('core.news_author')) {
+                    $response['author'] = $author;
+                }
+				jsonResponse(['news' => $response]);
 			}
 
 			$content_ = $news['body'];
@@ -133,68 +222,19 @@ $cache = Cache::getInstance();
 if (isApiRequest()) {
 	$response = [];
 
-	$categories = array();
-	foreach($db->query('SELECT `id`, `name`, `icon_id` FROM `' . TABLE_PREFIX . 'news_categories` WHERE `hide` != 1') as $cat)
-	{
-		$categories[$cat['id']] = array(
-			'name' => $cat['name'],
-			'icon_id' => $cat['icon_id']
-		);
-	}
+    $tickers = getTickersData(setting('core.news_ticker_limit'));
+    foreach ($tickers as &$t) unset($t['hide']);
+    $response['tickers'] = $tickers;
 
-	$tickers_db = $db->query('SELECT * FROM `' . TABLE_PREFIX . 'news` WHERE `type` = ' . TICKER . ' AND `hide` != 1 ORDER BY `date` DESC LIMIT ' . setting('core.news_ticker_limit'));
-	$response['tickers'] = [];
-	if($tickers_db->rowCount() > 0)
-	{
-		$raw_tickers = $tickers_db->fetchAll();
-		foreach($raw_tickers as $ticker) {
-			$response['tickers'][] = [
-				'id' => $ticker['id'],
-				'title' => $ticker['title'],
-				'body' => $ticker['body'],
-				'date' => $ticker['date'],
-				'category' => $ticker['category'],
-				'icon' => $categories[$ticker['category']]['icon_id'],
-				'body_short' => short_text(strip_tags($ticker['body']), 100),
-				'hidden' => $ticker['hide']
-			];
-		}
-	}
+    $article = getFeaturedArticleData();
+    if ($article) {
+        unset($article['hide']);
+        $response['article'] = $article;
+    }
 
-	$featured_article_db =$db->query('SELECT `id`, `title`, `article_text`, `article_image`, `hide` FROM `' . TABLE_PREFIX . 'news` WHERE `type` = ' . ARTICLE . ' AND `hide` != 1 ORDER BY `date` DESC LIMIT 1');
-
-	if($featured_article_db->rowCount() > 0) {
-		$response['article'] = $featured_article_db->fetch();
-	}
-
-	$newses = $db->query('SELECT * FROM ' . $db->tableName(TABLE_PREFIX . 'news') . ' WHERE type = ' . NEWS . ' AND hide != 1 ORDER BY date' . ' DESC LIMIT ' . setting('core.news_limit'));
-	$response['news'] = [];
-	if($newses->rowCount() > 0)
-	{
-		$raw_news = $newses->fetchAll();
-		foreach($raw_news as $news)
-		{
-			$author = '';
-			$query = $db->query('SELECT `name` FROM `players` WHERE id = ' . $db->quote($news['player_id']) . ' LIMIT 1');
-			if($query->rowCount() > 0) {
-				$query = $query->fetch();
-				$author = $query['name'];
-			}
-
-			$response['news'][] = [
-				'id' => $news['id'],
-				'title' => $news['title'],
-				'body' => $news['body'],
-				'date' => $news['date'],
-				'category' => $news['category'],
-				'player_id' => $news['player_id'],
-				'author' => $author,
-				'icon' => $categories[$news['category']]['icon_id'],
-				'comments' => $news['comments'],
-				'hide' => $news['hide']
-			];
-		}
-	}
+    $news = getNewsData(setting('core.news_limit'));
+    foreach ($news as &$n) unset($n['hide']);
+    $response['news'] = $news;
 
 	jsonResponse($response);
 }
@@ -205,24 +245,12 @@ if($cache->enabled())
 
 if(!$news_cached)
 {
-	$categories = array();
-	foreach($db->query('SELECT `id`, `name`, `icon_id` FROM `' . TABLE_PREFIX . 'news_categories` WHERE `hide` != 1') as $cat)
-	{
-		$categories[$cat['id']] = array(
-			'name' => $cat['name'],
-			'icon_id' => $cat['icon_id']
-		);
-	}
-
-	$tickers_db = $db->query('SELECT * FROM `' . TABLE_PREFIX . 'news` WHERE `type` = ' . TICKER . ' AND `hide` != 1 ORDER BY `date` DESC LIMIT ' . setting('core.news_ticker_limit'));
+    $tickers = getTickersData(setting('core.news_ticker_limit'));
 	$tickers_content = '';
-	if($tickers_db->rowCount() > 0)
+	if(count($tickers) > 0)
 	{
-		$tickers = $tickers_db->fetchAll();
-		foreach($tickers as &$ticker) {
-			$ticker['icon'] = $categories[$ticker['category']]['icon_id'];
-			$ticker['body_short'] = short_text(strip_tags($ticker['body']), 100);
-			$ticker['hidden'] = $ticker['hide'];
+        foreach($tickers as &$ticker) {
+			$ticker['hidden'] = $ticker['hide']; // map hide to hidden for Twig
 		}
 
 		$tickers_content = $twig->render('news.tickers.html.twig', array(
@@ -234,24 +262,23 @@ if(!$news_cached)
 	if($cache->enabled() && !$canEdit)
 		$cache->set('news_' . $template_name . '_' . TICKER, $tickers_content, 60 * 60);
 
-	$featured_article_db =$db->query('SELECT `id`, `title`, `article_text`, `article_image`, `hide` FROM `' . TABLE_PREFIX . 'news` WHERE `type` = ' . ARTICLE . ' AND `hide` != 1 ORDER BY `date` DESC LIMIT 1');
+    $article = getFeaturedArticleData();
+	$featured_article = '';
+	if($article) {
+        // Map keys for Twig
+        $article_data = [
+            'id' => $article['id'],
+            'title' => $article['title'],
+            'text' => $article['text'],
+            'image' => $article['image'],
+            'hide' => $article['hide'],
+            'hidden' => $article['hide'],
+            'read_more' => $article['read_more']
+        ];
 
-	$article = '';
-	if($featured_article_db->rowCount() > 0) {
-		$article = $featured_article_db->fetch();
-
-		$featured_article = '';
 		if($twig->getLoader()->exists('news.featured_article.html.twig')) {
 			$featured_article = $twig->render('news.featured_article.html.twig', array(
-				'article' => array(
-					'id' => $article['id'],
-					'title' => $article['title'],
-					'text' => $article['article_text'],
-					'image' => $article['article_image'],
-					'hide' => $article['hide'],
-					'hidden' => $article['hide'],
-					'read_more'=> getLink('news/archive/') . $article['id']
-				),
+				'article' => $article_data,
 				'canEdit' => $canEdit
 			));
 		}
@@ -268,18 +295,12 @@ else {
 if(!$news_cached)
 {
 	ob_start();
-	$newses = $db->query('SELECT * FROM ' . $db->tableName(TABLE_PREFIX . 'news') . ' WHERE type = ' . NEWS . ' AND hide != 1 ORDER BY date' . ' DESC LIMIT ' . setting('core.news_limit'));
-	if($newses->rowCount() > 0)
-	{
-		foreach($newses as $news)
-		{
-			$author = '';
-			$query = $db->query('SELECT `name` FROM `players` WHERE id = ' . $db->quote($news['player_id']) . ' LIMIT 1');
-			if($query->rowCount() > 0) {
-				$query = $query->fetch();
-				$author = $query['name'];
-			}
+    $news_items = getNewsData(setting('core.news_limit'));
 
+	if(count($news_items) > 0)
+	{
+		foreach($news_items as $news)
+		{
 			$admin_options = '';
 			if($canEdit) {
 				$admin_options = '<br/><br/>' . $twig->render('admin.links.html.twig', ['page' => 'news', 'id' => $news['id'], 'hide' => $news['hide']]);
@@ -298,11 +319,11 @@ if(!$news_cached)
 
 			$twig->display('news.html.twig', array(
 				'id' => $news['id'],
-				'title' => stripslashes($news['title']),
+				'title' => $news['title'],
 				'content' => $content_ . $admin_options,
 				'date' => $news['date'],
 				'icon' => $categories[$news['category']]['icon_id'],
-				'author' => setting('core.news_author') ? $author : '',
+				'author' => isset($news['author']) ? $news['author'] : '',
 				'comments' => $news['comments'] != 0 ? getForumThreadLink($news['comments']) : null,
 				'hide'=> $news['hide']
 			));

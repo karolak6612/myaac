@@ -8,7 +8,7 @@
 
   onMount(async () => {
     try {
-      const response = await fetch('/forum?api=1');
+      const response = await fetch(`${base}/forum?api=1`);
       if (response.ok) {
         const data = await response.json();
         boards = data.boards || [];
@@ -56,7 +56,7 @@
                     <td class="border p-3 text-center">{board.threads}</td>
                     <td class="border p-3 text-center">{board.posts}</td>
                     <td class="border p-3 text-sm">
-                        {#if board.last_post.name}
+                        {#if board.last_post && board.last_post.name}
                             {formatDate(board.last_post.date)}<br/>
                             by {board.last_post.name}
                         {:else}

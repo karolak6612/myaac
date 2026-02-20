@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { user, loggedIn, loading } from '$lib/stores/auth';
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
 
   let accountData = null;
   let players = [];
@@ -13,7 +14,7 @@
 
   onMount(async () => {
     try {
-      const response = await fetch('/account/manage?api=1');
+      const response = await fetch(`${base}/account/manage?api=1`);
       if (response.ok) {
         const data = await response.json();
         if (data.logged) {
@@ -36,7 +37,22 @@
 
   async function logout() {
     try {
-      const response = await fetch('/account/logout?api=1');
+      // Fetch CSRF token first
+      const res = await fetch(`${base}/account/csrf?api=1`);
+      let csrf_token = '';
+      if (res.ok) {
+          const data = await res.json();
+          csrf_token = data.csrf_token;
+      }
+
+      const formData = new FormData();
+      formData.append('csrf_token', csrf_token);
+
+      const response = await fetch(`${base}/account/logout?api=1`, {
+          method: 'POST',
+          body: formData,
+          credentials: 'same-origin'
+      });
       if (response.ok) {
         loggedIn.set(false);
         user.set(null);

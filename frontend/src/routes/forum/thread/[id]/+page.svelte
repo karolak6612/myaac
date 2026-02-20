@@ -2,34 +2,43 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { base } from '$app/paths';
+  import DOMPurify from 'dompurify';
 
   let threadData = null;
   let error = '';
   let loading = true;
   let currentPage = 0;
+  let abortController = null;
 
   $: id = $page.params.id;
 
+  $: if (id) {
+      currentPage = 0;
+      loadData(0);
+  }
+
   async function loadData(pageIndex = 0) {
+    if (abortController) abortController.abort();
+    abortController = new AbortController();
+
     loading = true;
     error = '';
     try {
-      const response = await fetch(`/forum/thread/${id}/${pageIndex}?api=1`);
+      const response = await fetch(`${base}/forum/thread/${id}/${pageIndex}?api=1`, { signal: abortController.signal });
       if (response.ok) {
         threadData = await response.json();
         currentPage = threadData.page;
       } else {
         error = 'Failed to load thread data.';
       }
+      loading = false;
     } catch (e) {
+      if (e.name === 'AbortError') return;
       console.error(e);
       error = 'Failed to load thread data.';
-    } finally {
-        loading = false;
+      loading = false;
     }
   }
-
-  onMount(() => loadData(0));
 
   function formatDate(timestamp) {
     if (!timestamp) return 'Never';
@@ -40,12 +49,12 @@
 {#if loading}
   <p>Loading...</p>
 {:else if error}
-  <p style="color: red">{error}</p>
+  <p class="text-red-500">{error}</p>
 {:else if threadData}
   <h1 class="text-2xl font-bold mb-4">{threadData.thread.topic}</h1>
   <div class="mb-4 text-sm text-gray-500">
-      <a href="/forum" class="hover:underline">Forum</a> &gt;
-      <a href="/forum/board/{threadData.thread.section.id}" class="hover:underline">{threadData.thread.section.name}</a> &gt;
+      <a href="{base}/forum" class="hover:underline">Forum</a> &gt;
+      <a href="{base}/forum/board/{threadData.thread.section.id}" class="hover:underline">{threadData.thread.section.name}</a> &gt;
       {threadData.thread.topic}
   </div>
 
@@ -60,7 +69,7 @@
                 {/if}
                  {#if post.author.outfit}
                     <div class="my-2 flex justify-center md:justify-start">
-                        {@html post.author.outfit}
+                        {@html DOMPurify.sanitize(post.author.outfit)}
                     </div>
                 {/if}
                 <div class="text-xs text-gray-500">Posts: {post.author.posts_count}</div>
@@ -71,7 +80,7 @@
                     <span>#{post.id}</span>
                 </div>
                 <div class="prose max-w-none flex-grow">
-                    {@html post.content}
+                    {@html DOMPurify.sanitize(post.content)}
                 </div>
                 {#if post.edited}
                     <div class="mt-4 pt-2 border-t text-xs text-gray-400 italic">

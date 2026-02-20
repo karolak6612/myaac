@@ -59,7 +59,7 @@ else {
 				$tmp_vocation = 'Unknown';
 		}
 
-		$spell['vocations'] = implode('<br/>', $vocations);
+		$spell['vocations'] = isApiRequest() ? $vocations : implode('<br/>', $vocations);
 		$spells[] = $spell;
 	}
 }

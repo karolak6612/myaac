@@ -13,6 +13,8 @@
   let config = {};
   let countries = {};
   let error = '';
+  let submitting = false;
+  let csrf_token = '';
 
   onMount(async () => {
     try {
@@ -21,6 +23,7 @@
         const data = await response.json();
         config = data.config;
         countries = data.countries || {};
+        csrf_token = data.csrf_token;
       }
     } catch (e) {
       console.error(e);
@@ -29,12 +32,17 @@
   });
 
   async function handleSubmit() {
+    if (submitting) return;
+    submitting = true;
     error = '';
     const form = new FormData();
     for (const key in formData) {
       form.append(key, formData[key]);
     }
     form.append('save', '1');
+    if (csrf_token) {
+        form.append('csrf_token', csrf_token);
+    }
 
     try {
       const response = await fetch('/account/create?api=1', {
@@ -42,13 +50,19 @@
         body: form
       });
 
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.indexOf('application/json') !== -1) {
+          data = await response.json();
+      } else {
+          data = { errors: ['An error occurred.'] };
+      }
+
       if (!response.ok) {
-        const err = await response.json();
-        error = err.errors ? Object.values(err.errors).join(', ') : 'Registration failed.';
+        error = data.errors ? Object.values(data.errors).join(', ') : 'Registration failed.';
         return;
       }
 
-      const data = await response.json();
       if (data.success) {
         goto('/account/login');
       } else {
@@ -57,6 +71,8 @@
     } catch (e) {
       console.error(e);
       error = 'An error occurred during registration. Please try again.';
+    } finally {
+        submitting = false;
     }
   }
 </script>
@@ -104,7 +120,7 @@
     </label>
   </div>
 
-  <button type="submit">Register</button>
+  <button type="submit" disabled={submitting}>{submitting ? 'Registering...' : 'Register'}</button>
 
   {#if error}
     <p style="color: red">{error}</p>
