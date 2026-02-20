@@ -41,6 +41,9 @@ if (ACTION == 'logout') {
 
 // if we're not logged in - show login box
 if(!$logged || !admin()) {
+	if (isApiRequest()) {
+		jsonResponse(['status' => 'error', 'message' => 'Unauthorized'], 401);
+	}
 	$page = 'login';
 }
 

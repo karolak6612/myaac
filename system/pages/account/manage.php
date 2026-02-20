@@ -147,9 +147,9 @@ if (isApiRequest()) {
 			'recovery_key_set' => !empty($recovery_key),
 			'email_new_time' => $email_new_time,
 			'email_new' => isset($email_new) ? $email_new : '',
+			'is_admin' => admin()
 		],
 		'players' => $players_data,
-		'actions' => $actions,
 		'config' => [
 			'free_premium' => $freePremium,
 			'vip_system_enabled' => $vipSystemEnabled

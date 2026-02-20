@@ -5,3 +5,17 @@ build/
 .env.*
 !.env.example
 _app/
+vendor/
+.idea/
+config.local.php
+config2.local.php
+system/cache/*
+system/logs/*
+system/data/*
+system/php_sessions/*
+plugins/*
+templates/*
+cypress.env.json
+cypress/screenshots/
+!plugins/example.json
+!templates/example.json

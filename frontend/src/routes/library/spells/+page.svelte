@@ -7,12 +7,18 @@
   let selectedVocation = 'all';
   let loading = true;
   let error = '';
+  let currentAbortController = null;
 
   async function loadData() {
+    if (currentAbortController) {
+        currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
+
     loading = true;
     error = '';
     try {
-      const response = await fetch(`/spells?api=1&vocation=${selectedVocation}`);
+      const response = await fetch(`/spells?api=1&vocation=${selectedVocation}`, { signal: currentAbortController.signal });
       if (response.ok) {
         const data = await response.json();
         spells = data.spells || [];
@@ -21,10 +27,13 @@
         error = 'Failed to load spells.';
       }
     } catch (e) {
+      if (e.name === 'AbortError') return;
       console.error(e);
       error = 'Failed to load spells.';
     } finally {
-        loading = false;
+        if (!currentAbortController?.signal.aborted) {
+            loading = false;
+        }
     }
   }
 

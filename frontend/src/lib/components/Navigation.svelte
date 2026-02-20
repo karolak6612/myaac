@@ -13,9 +13,11 @@
       <li><a href="/library/spells" class="hover:text-gray-300">Spells</a></li>
       <li><a href="/forum" class="hover:text-gray-300">Forum</a></li>
 
-      {#if $loggedIn}
+      {#if $loggedIn && $user}
         <li><a href="/account/manage" class="hover:text-gray-300">Account</a></li>
-        <li><a href="/admin" class="hover:text-gray-300">Admin</a></li>
+        {#if $user.is_admin}
+            <li><a href="/admin" class="hover:text-gray-300">Admin</a></li>
+        {/if}
       {:else}
         <li><a href="/account/login" class="hover:text-gray-300">Login</a></li>
         <li><a href="/account/register" class="hover:text-gray-300">Register</a></li>

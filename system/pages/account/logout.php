@@ -13,6 +13,10 @@ $title = 'Logout';
 
 require __DIR__ . '/base.php';
 
+if (isApiRequest() && !isRequestMethod('post')) {
+	jsonResponse(['success' => false, 'message' => 'Method not allowed.'], 405);
+}
+
 if(!$logged) {
 	if (isApiRequest()) {
 		jsonResponse(['success' => true, 'message' => 'Not logged in.']);

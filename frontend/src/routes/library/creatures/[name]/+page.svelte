@@ -1,36 +1,11 @@
 <script>
-  import { onMount } from 'svelte';
-  import { page } from '$app/stores';
+  export let data;
 
-  let monster = null;
-  let loading = true;
-  let error = '';
-
-  $: name = $page.params.name;
-
-  onMount(async () => {
-    loading = true;
-    error = '';
-    try {
-      const response = await fetch(`/monsters/${name}?api=1`);
-      if (response.ok) {
-        const data = await response.json();
-        monster = data.monster;
-      } else {
-        error = 'Failed to load creature.';
-      }
-    } catch (e) {
-      console.error(e);
-      error = 'Failed to load creature.';
-    } finally {
-        loading = false;
-    }
-  });
+  $: monster = data.monster;
+  $: error = data.error;
 </script>
 
-{#if loading}
-  <p>Loading...</p>
-{:else if error}
+{#if error}
   <p style="color: red">{error}</p>
 {:else if monster}
   <div class="container mx-auto p-4">

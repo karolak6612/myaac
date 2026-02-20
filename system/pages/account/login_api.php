@@ -21,7 +21,8 @@ if ($logged) {
             'location' => $account_logged->getLocation(),
             'recovery_key_set' => !empty($account_logged->getCustomField('key')),
             'email_new_time' => $account_logged->getCustomField("email_new_time"),
-            'email_new' => $account_logged->getCustomField("email_new")
+            'email_new' => $account_logged->getCustomField("email_new"),
+            'is_admin' => admin()
         ]
     ];
     jsonResponse($response);

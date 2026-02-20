@@ -9,12 +9,20 @@
   let currentPage = 0;
 
   $: id = $page.params.id;
+  $: if (id) loadData(0);
+
+  let currentAbortController = null;
 
   async function loadData(pageIndex = 0) {
+    if (currentAbortController) {
+      currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
+
     loading = true;
     error = '';
     try {
-      const response = await fetch(`/forum/board/${id}/${pageIndex}?api=1`);
+      const response = await fetch(`/forum/board/${id}/${pageIndex}?api=1`, { signal: currentAbortController.signal });
       if (response.ok) {
         boardData = await response.json();
         currentPage = boardData.page;
@@ -22,14 +30,15 @@
         error = 'Failed to load board data.';
       }
     } catch (e) {
+      if (e.name === 'AbortError') return;
       console.error(e);
       error = 'Failed to load board data.';
     } finally {
-        loading = false;
+        if (!currentAbortController?.signal.aborted) {
+            loading = false;
+        }
     }
   }
-
-  onMount(() => loadData(0));
 
   function formatDate(timestamp) {
     if (!timestamp) return 'Never';

@@ -28,6 +28,9 @@ if(empty($errors)) {
 }
 
 if(!empty($errors)) {
+	if (isApiRequest()) {
+		jsonResponse(['errors' => $errors], 400);
+	}
 	$twig->display('error_box.html.twig', array('errors' => $errors));
 	$twig->display('guilds.back_button.html.twig');
 	return;

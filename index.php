@@ -34,9 +34,9 @@ require_once SYSTEM . 'functions.php';
 if (!isApiRequest()) {
     // If it's a static file request, let web server handle it or return 404
     if(preg_match("/^(.*)\.(gif|jpg|png|jpeg|tiff|bmp|css|js|less|map|html|zip|rar|gz|ttf|woff|ico)$/i", $_SERVER['REQUEST_URI'])) {
-        // Only return 404 if the file really doesn't exist
-        // This allows existing assets to be served
-        if (!file_exists(BASE . $_SERVER['REQUEST_URI'])) {
+        $requestedPath = realpath(BASE . $_SERVER['REQUEST_URI']);
+        // Ensure the resolved path is within BASE and the file exists
+        if ($requestedPath === false || strpos($requestedPath, realpath(BASE)) !== 0) {
             http_response_code(404);
             exit;
         }

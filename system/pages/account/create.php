@@ -291,7 +291,7 @@ if($save)
 		}
 		else
 		{
-			if(setting('core.account_create_auto_login')) {
+			if(setting('core.account_create_auto_login') && !isApiRequest()) {
 				if ($hasBeenCreatedByEMail) {
 					$_POST['account_login'] = $email;
 				}
@@ -349,7 +349,7 @@ if($save)
 			$character_created = $createCharacter->doCreate($character_name, $character_sex, $character_vocation, $character_town, $new_account, $errors);
 			if (!$character_created) {
 				if (isApiRequest()) {
-					jsonResponse(['success' => true, 'message' => 'Account created, but error creating character.', 'errors' => $errors]);
+					jsonResponse(['success' => false, 'message' => 'Account created, but error creating character.', 'errors' => $errors]);
 				}
 				error('There was an error creating your character. Please create your character later in account management page.');
 				error(implode(' ', $errors));

@@ -12,6 +12,7 @@ export interface User {
   recovery_key_set: boolean;
   email_new_time: number;
   email_new: string;
+  is_admin?: boolean;
 }
 
 export const user = writable<User | null>(null);

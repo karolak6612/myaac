@@ -55,7 +55,6 @@ if($logged && (!$sections[$section_id]['closed'] || Forum::isModerator())) {
 		<a href="' . getLink('forum') . '?action=new_thread&section_id='.$section_id.'"><img src="images/forum/topic.gif" border="0" /></a>';
 }
 
-echo '<br /><br />Page: '.$links_to_pages.'<br />';
 $last_threads = $db->query("SELECT `players`.`id` as `player_id`, `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`first_post`, `" . FORUM_TABLE_PREFIX . "forum`.`post_text`, `" . FORUM_TABLE_PREFIX . "forum`.`post_topic`, `" . FORUM_TABLE_PREFIX . "forum`.`id`, `" . FORUM_TABLE_PREFIX . "forum`.`last_post`, `" . FORUM_TABLE_PREFIX . "forum`.`replies`, `" . FORUM_TABLE_PREFIX . "forum`.`views`, `" . FORUM_TABLE_PREFIX . "forum`.`post_date` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` AND `" . FORUM_TABLE_PREFIX . "forum`.`section` = ".$section_id." AND `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = `" . FORUM_TABLE_PREFIX . "forum`.`id` ORDER BY `" . FORUM_TABLE_PREFIX . "forum`.`last_post` DESC LIMIT ".setting('core.forum_threads_per_page')." OFFSET ".($_page * setting('core.forum_threads_per_page')))->fetchAll(PDO::FETCH_ASSOC);
 
 if (isApiRequest()) {
@@ -96,6 +95,14 @@ if (isApiRequest()) {
 	]);
 }
 
+echo '<a href="' . getLink('forum') . '">Boards</a> >> <b>'.escapeHtml($sections[$section_id]['name']).'</b>';
+
+if($logged && (!$sections[$section_id]['closed'] || Forum::isModerator())) {
+	echo '<br /><br />
+		<a href="' . getLink('forum') . '?action=new_thread&section_id='.$section_id.'"><img src="images/forum/topic.gif" border="0" /></a>';
+}
+
+echo '<br /><br />Page: '.$links_to_pages.'<br />';
 
 if(isset($last_threads[0])) {
 	echo '<table width="100%">

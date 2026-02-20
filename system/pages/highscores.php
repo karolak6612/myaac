@@ -248,8 +248,10 @@ foreach($highscores as $id => &$player)
 		}
 
 		$player['link'] = getPlayerLink($player['name'], false);
-		$player['flag'] = getFlagImage($player['country']);
-		$player['outfit'] = '<img style="position:absolute;margin-top:-50px;margin-left:-30px" src="' . $player['outfit_url'] . '" alt="" />';
+		if (!isApiRequest()) {
+			$player['flag'] = getFlagImage($player['country']);
+			$player['outfit'] = '<img style="position:absolute;margin-top:-50px;margin-left:-30px" src="' . $player['outfit_url'] . '" alt="" />';
+		}
 
 		if ($skill != POT::SKILL__LEVEL) {
 			if (isset($lastValue) && $lastValue == $player['value']) {
@@ -305,7 +307,7 @@ if(setting('core.highscores_frags')) {
 if(setting('core.highscores_balance'))
 	$types['balance'] = 'Balance';
 
-if ($highscoresTTL > 0 && $cache->enabled()) {
+if ($highscoresTTL > 0 && $cache->enabled() && !isApiRequest()) {
 	echo '<small>*Note: Highscores are updated every' . ($highscoresTTL > 1 ? ' ' . $highscoresTTL : '') . ' minute' . ($highscoresTTL > 1 ? 's' : '') . '.</small><br/><br/>';
 }
 

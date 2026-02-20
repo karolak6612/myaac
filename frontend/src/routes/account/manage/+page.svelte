@@ -36,7 +36,7 @@
 
   async function logout() {
     try {
-      const response = await fetch('/account/logout?api=1');
+      const response = await fetch('/account/logout?api=1', { method: 'POST' });
       if (response.ok) {
         loggedIn.set(false);
         user.set(null);

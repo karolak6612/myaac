@@ -8,22 +8,31 @@
   let data = null;
   let error = '';
   let loading = false;
+  let currentAbortController = null;
 
   async function loadData() {
+    if (currentAbortController) {
+        currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
+
     loading = true;
     error = '';
     try {
-      const response = await fetch(`/highscores/${list}/${vocation}/${page}?api=1`);
+      const response = await fetch(`/highscores/${list}/${vocation}/${page}?api=1`, { signal: currentAbortController.signal });
       if (response.ok) {
         data = await response.json();
       } else {
         error = 'Failed to load highscores.';
       }
     } catch (e) {
+      if (e.name === 'AbortError') return;
       console.error(e);
       error = 'Failed to load highscores.';
     } finally {
-        loading = false;
+        if (!currentAbortController?.signal.aborted) {
+            loading = false;
+        }
     }
   }
 
@@ -90,8 +99,8 @@
     </table>
 
     <div class="pagination mt-4 flex gap-2">
-        <button disabled={page <= 1} on:click={() => { page--; loadData(); }} class="border p-2">Previous</button>
+        <button disabled={page <= 1} on:click={() => { page--; loadData(); }} class="border p-2 disabled:opacity-50">Previous</button>
         <span class="p-2">Page {page}</span>
-        <button on:click={() => { page++; loadData(); }} class="border p-2">Next</button>
+        <button disabled={data && data.highscores && data.highscores.length < (data.perPage || 100)} on:click={() => { page++; loadData(); }} class="border p-2 disabled:opacity-50">Next</button>
     </div>
 {/if}

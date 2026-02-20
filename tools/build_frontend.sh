@@ -1,5 +1,7 @@
 #!/bin/bash
-cd frontend
+set -euo pipefail
+
+cd frontend || { echo "ERROR: frontend/ directory not found" >&2; exit 1; }
 npm install
 npm run build
 cd ..

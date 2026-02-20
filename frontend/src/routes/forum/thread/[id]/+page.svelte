@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { base } from '$app/paths';
+  import DOMPurify from 'dompurify';
 
   let threadData = null;
   let error = '';
@@ -9,12 +10,20 @@
   let currentPage = 0;
 
   $: id = $page.params.id;
+  $: if (id) loadData(0);
+
+  let currentAbortController = null;
 
   async function loadData(pageIndex = 0) {
+    if (currentAbortController) {
+      currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
+
     loading = true;
     error = '';
     try {
-      const response = await fetch(`/forum/thread/${id}/${pageIndex}?api=1`);
+      const response = await fetch(`/forum/thread/${id}/${pageIndex}?api=1`, { signal: currentAbortController.signal });
       if (response.ok) {
         threadData = await response.json();
         currentPage = threadData.page;
@@ -22,14 +31,15 @@
         error = 'Failed to load thread data.';
       }
     } catch (e) {
+      if (e.name === 'AbortError') return;
       console.error(e);
       error = 'Failed to load thread data.';
     } finally {
-        loading = false;
+        if (!currentAbortController?.signal.aborted) {
+            loading = false;
+        }
     }
   }
-
-  onMount(() => loadData(0));
 
   function formatDate(timestamp) {
     if (!timestamp) return 'Never';
@@ -60,7 +70,7 @@
                 {/if}
                  {#if post.author.outfit}
                     <div class="my-2 flex justify-center md:justify-start">
-                        {@html post.author.outfit}
+                        {@html DOMPurify.sanitize(post.author.outfit)}
                     </div>
                 {/if}
                 <div class="text-xs text-gray-500">Posts: {post.author.posts_count}</div>
@@ -71,7 +81,7 @@
                     <span>#{post.id}</span>
                 </div>
                 <div class="prose max-w-none flex-grow">
-                    {@html post.content}
+                    {@html DOMPurify.sanitize(post.content)}
                 </div>
                 {#if post.edited}
                     <div class="mt-4 pt-2 border-t text-xs text-gray-400 italic">

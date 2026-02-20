@@ -13,6 +13,7 @@
   let config = {};
   let countries = {};
   let error = '';
+  let submitting = false;
 
   onMount(async () => {
     try {
@@ -29,6 +30,8 @@
   });
 
   async function handleSubmit() {
+    if (submitting) return;
+    submitting = true;
     error = '';
     const form = new FormData();
     for (const key in formData) {
@@ -57,6 +60,8 @@
     } catch (e) {
       console.error(e);
       error = 'An error occurred during registration. Please try again.';
+    } finally {
+      submitting = false;
     }
   }
 </script>
@@ -104,7 +109,7 @@
     </label>
   </div>
 
-  <button type="submit">Register</button>
+  <button type="submit" disabled={submitting}>{submitting ? 'Registering...' : 'Register'}</button>
 
   {#if error}
     <p style="color: red">{error}</p>

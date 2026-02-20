@@ -56,7 +56,7 @@
                     <td class="border p-3 text-center">{board.threads}</td>
                     <td class="border p-3 text-center">{board.posts}</td>
                     <td class="border p-3 text-sm">
-                        {#if board.last_post.name}
+                        {#if board.last_post && board.last_post.name}
                             {formatDate(board.last_post.date)}<br/>
                             by {board.last_post.name}
                         {:else}
