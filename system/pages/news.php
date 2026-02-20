@@ -69,22 +69,15 @@ function getFeaturedArticleData() {
 
 function getNewsData($limit) {
     global $db, $categories;
-    $newses = $db->query('SELECT * FROM ' . $db->tableName(TABLE_PREFIX . 'news') . ' WHERE type = ' . NEWS . ' AND hide != 1 ORDER BY date' . ' DESC LIMIT ' . $limit);
+    $limit = (int)$limit;
+    $newsQuery = 'SELECT n.*, p.name AS author_name FROM ' . $db->tableName(TABLE_PREFIX . 'news') . ' n LEFT JOIN ' . $db->tableName('players') . ' p ON n.player_id = p.id WHERE n.type = ' . NEWS . ' AND n.hide != 1 ORDER BY n.date DESC LIMIT ' . $limit;
+    $newses = $db->query($newsQuery);
     $data = [];
     if($newses->rowCount() > 0)
     {
         $raw_news = $newses->fetchAll();
         foreach($raw_news as $news)
         {
-            $author = '';
-            if (setting('core.news_author')) {
-                $query = $db->query('SELECT `name` FROM `players` WHERE id = ' . $db->quote($news['player_id']) . ' LIMIT 1');
-                if($query->rowCount() > 0) {
-                    $query = $query->fetch();
-                    $author = $query['name'];
-                }
-            }
-
             $item = [
                 'id' => $news['id'],
                 'title' => stripslashes($news['title']),
@@ -97,7 +90,7 @@ function getNewsData($limit) {
             ];
 
             if (setting('core.news_author')) {
-                $item['author'] = $author;
+                $item['author'] = $news['author_name'] ?? '';
             }
 
             $data[] = $item;
