@@ -9,7 +9,7 @@ cd ..
 mkdir -p _app
 # Use rsync if available for safer copy, or standard cp with checks
 if [ -d "frontend/build/_app" ]; then
-    cp -r frontend/build/_app/* _app/
+    rsync -a --delete frontend/build/_app/ _app/
 else
     echo "WARNING: frontend/build/_app not found, skipping copy"
 fi

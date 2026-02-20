@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
   import { user, loggedIn, loading } from '$lib/stores/auth.svelte';
   import { goto } from '$app/navigation';
@@ -6,9 +6,9 @@
   import { base } from '$app/paths';
   import DOMPurify from 'dompurify';
 
-  let content = '';
-  let currentPage = 'dashboard';
-  let error = '';
+  let content = $state('');
+  let currentPage = $state('dashboard');
+  let error = $state('');
 
   $effect(() => {
     if (!loading.value && (!loggedIn.value || !user.value?.is_admin)) {
@@ -18,7 +18,70 @@
 
   let queryPage = $derived($page.url.searchParams.get('p') || 'dashboard');
 
-  async function loadPage(p) {
+  onMount(() => {
+    const adminContent = document.getElementById('admin-content');
+
+    const handleFormSubmit = async (e: Event) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'FORM') {
+        e.preventDefault();
+        const form = target as HTMLFormElement;
+        const formData = new FormData(form);
+        const action = form.getAttribute('action') || window.location.href;
+        const url = new URL(action, window.location.href);
+
+        url.searchParams.set('api', '1');
+
+        const method = (form.getAttribute('method') || 'GET').toUpperCase();
+        const fetchOptions: RequestInit = {
+          method: method
+        };
+
+        if (method === 'POST') {
+          fetchOptions.body = formData;
+        } else {
+          for (const pair of formData.entries()) {
+            url.searchParams.set(pair[0], pair[1] as string);
+          }
+        }
+
+        try {
+          const res = await fetch(url.toString(), fetchOptions);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.content) {
+              content = data.content;
+            }
+            if (data.page) {
+              currentPage = data.page;
+            }
+            if (data.error) {
+              error = data.error;
+            } else {
+              error = '';
+            }
+          } else {
+            error = 'Form submission failed (server error).';
+          }
+        } catch (err) {
+          console.error(err);
+          error = 'Form submission failed (network error).';
+        }
+      }
+    };
+
+    if (adminContent) {
+      adminContent.addEventListener('submit', handleFormSubmit);
+    }
+
+    return () => {
+      if (adminContent) {
+        adminContent.removeEventListener('submit', handleFormSubmit);
+      }
+    };
+  });
+
+  async function loadPage(p: string) {
     try {
       const response = await fetch(`${base}/admin/?api=1&p=${p}`);
       if (response.ok) {

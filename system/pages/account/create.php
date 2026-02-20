@@ -263,20 +263,19 @@ if($save)
 
 			if(_mail($email, 'New account on ' . $config['lua']['serverName'], $body_html))
 			{
-				if (isApiRequest()) {
-					jsonResponse(['success' => true, 'message' => 'Account created. Please verify your email.', 'verify_email' => true]);
+				if (!isApiRequest()) {
+					echo 'Your account has been created.<br/><br/>';
+
+					warning("Before you can login - you need to verify your E-Mail. The verification link has been sent to $email. If the message is not coming - remember to check the SPAM folder.");
+
+					$twig->display('success.html.twig', array(
+						'title' => 'Account Created',
+						'description' => 'Your account ' . $account_type . ' is <b>' . $tmp_account . '</b><br/>You will need the account ' . $account_type . ' and your password to play on ' . configLua('serverName') . '.
+							Please keep your account ' . $account_type . ' and password in a safe place and
+							never give your account ' . $account_type . ' or password to anybody.',
+						'custom_buttons' => setting('core.account_create_character_create') ? '' : null
+					));
 				}
-				echo 'Your account has been created.<br/><br/>';
-
-				warning("Before you can login - you need to verify your E-Mail. The verification link has been sent to $email. If the message is not coming - remember to check the SPAM folder.");
-
-				$twig->display('success.html.twig', array(
-					'title' => 'Account Created',
-					'description' => 'Your account ' . $account_type . ' is <b>' . $tmp_account . '</b><br/>You will need the account ' . $account_type . ' and your password to play on ' . configLua('serverName') . '.
-						Please keep your account ' . $account_type . ' and password in a safe place and
-						never give your account ' . $account_type . ' or password to anybody.',
-					'custom_buttons' => setting('core.account_create_character_create') ? '' : null
-				));
 			}
 			else
 			{
@@ -291,45 +290,43 @@ if($save)
 		}
 		else
 		{
-			if (isApiRequest()) {
-				jsonResponse(['success' => true, 'message' => 'Account created successfully.']);
-			}
+			if (!isApiRequest()) {
+				if(setting('core.account_create_auto_login')) {
+					if ($hasBeenCreatedByEMail) {
+						$_POST['account_login'] = $email;
+					}
+					else {
+						$_POST['account_login'] = USE_ACCOUNT_NAME ? $account_name : $account_id;
+					}
 
-			if(setting('core.account_create_auto_login')) {
-				if ($hasBeenCreatedByEMail) {
-					$_POST['account_login'] = $email;
+					$_POST['password_login'] = $password_confirm;
+
+					require PAGES . 'account/login.php';
+					header('Location: ' . getLink('account/manage'));
+				}
+
+				echo 'Your account';
+				if(setting('core.account_create_character_create')) {
+					echo ' and character have';
 				}
 				else {
-					$_POST['account_login'] = USE_ACCOUNT_NAME ? $account_name : $account_id;
+					echo ' has';
 				}
 
-				$_POST['password_login'] = $password_confirm;
+				echo ' been created.';
+				if(!setting('core.account_create_character_create')) {
+					echo ' Now you can login and create your first character.';
+				}
 
-				require PAGES . 'account/login.php';
-				header('Location: ' . getLink('account/manage'));
+				echo ' See you in Tibia!<br/><br/>';
+				$twig->display('success.html.twig', array(
+					'title' => 'Account Created',
+					'description' => 'Your account ' . $account_type . ' is <b>' . $tmp_account . '</b><br/>You will need the account ' . $account_type . ' and your password to play on ' . configLua('serverName') . '.
+							Please keep your account ' . $account_type . ' and password in a safe place and
+							never give your account ' . $account_type . ' or password to anybody.',
+					'custom_buttons' => setting('core.account_create_character_create') ? '' : null
+				));
 			}
-
-			echo 'Your account';
-			if(setting('core.account_create_character_create')) {
-				echo ' and character have';
-			}
-			else {
-				echo ' has';
-			}
-
-			echo ' been created.';
-			if(!setting('core.account_create_character_create')) {
-				echo ' Now you can login and create your first character.';
-			}
-
-			echo ' See you in Tibia!<br/><br/>';
-			$twig->display('success.html.twig', array(
-				'title' => 'Account Created',
-				'description' => 'Your account ' . $account_type . ' is <b>' . $tmp_account . '</b><br/>You will need the account ' . $account_type . ' and your password to play on ' . configLua('serverName') . '.
-						Please keep your account ' . $account_type . ' and password in a safe place and
-						never give your account ' . $account_type . ' or password to anybody.',
-				'custom_buttons' => setting('core.account_create_character_create') ? '' : null
-			));
 
 			if(setting('core.mail_enabled') && setting('core.account_welcome_mail'))
 			{
@@ -337,8 +334,11 @@ if($save)
 					'account' => $tmp_account
 				));
 
-				if(_mail($email, 'Your account on ' . $config['lua']['serverName'], $mailBody))
-					echo '<br /><small>These informations were send on email address <b>' . $email . '</b>.';
+				if(_mail($email, 'Your account on ' . $config['lua']['serverName'], $mailBody)) {
+					if (!isApiRequest()) {
+						echo '<br /><small>These informations were send on email address <b>' . $email . '</b>.';
+					}
+				}
 				else {
 					error('An error occurred while sending email. For Admin: More info can be found in system/logs/mailer-error.log');
 				}
@@ -355,6 +355,17 @@ if($save)
 				error('There was an error creating your character. Please create your character later in account management page.');
 				error(implode(' ', $errors));
 			}
+		}
+
+		if (isApiRequest()) {
+			$response = ['success' => true];
+			if (setting('core.mail_enabled') && setting('core.account_mail_verify')) {
+				$response['message'] = 'Account created. Please verify your email.';
+				$response['verify_email'] = true;
+			} else {
+				$response['message'] = 'Account created successfully.';
+			}
+			jsonResponse($response);
 		}
 
 		return;

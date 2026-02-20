@@ -53,7 +53,7 @@
   <h1 class="text-2xl font-bold mb-4">{boardData.board.name}</h1>
   {#if boardData.can_post}
     <div class="mb-4">
-        <a href="/forum/new-thread?board={id}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">New Thread</a>
+        <a href="{base}/forum/new-thread?board={id}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">New Thread</a>
     </div>
   {/if}
 
@@ -71,7 +71,7 @@
             {#each boardData.threads as thread}
                 <tr class="hover:bg-gray-50">
                     <td class="border p-3">
-                        <a href="/forum/thread/{thread.id}" class="font-bold text-blue-600 hover:underline">{thread.topic}</a>
+                        <a href="{base}/forum/thread/{thread.id}" class="font-bold text-blue-600 hover:underline">{thread.topic}</a>
                         <p class="text-sm text-gray-600">by {thread.author_name}</p>
                     </td>
                     <td class="border p-3 text-center">{thread.replies}</td>

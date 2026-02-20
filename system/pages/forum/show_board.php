@@ -48,7 +48,16 @@ for($i = 0; $i < $threads_count['threads_count'] / setting('core.forum_threads_p
 		$links_to_pages .= '<b>'.($i + 1).' </b>';
 }
 
-$last_threads = $db->query("SELECT `players`.`id` as `player_id`, `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`first_post`, `" . FORUM_TABLE_PREFIX . "forum`.`post_text`, `" . FORUM_TABLE_PREFIX . "forum`.`post_topic`, `" . FORUM_TABLE_PREFIX . "forum`.`id`, `" . FORUM_TABLE_PREFIX . "forum`.`last_post`, `" . FORUM_TABLE_PREFIX . "forum`.`replies`, `" . FORUM_TABLE_PREFIX . "forum`.`views`, `" . FORUM_TABLE_PREFIX . "forum`.`post_date`, (SELECT `players`.`name` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` as f2 WHERE f2.`first_post` = `" . FORUM_TABLE_PREFIX . "forum`.`id` AND `players`.`id` = f2.`author_guid` ORDER BY f2.`post_date` DESC LIMIT 1) as last_post_author FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` AND `" . FORUM_TABLE_PREFIX . "forum`.`section` = ".$section_id." AND `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = `" . FORUM_TABLE_PREFIX . "forum`.`id` ORDER BY `" . FORUM_TABLE_PREFIX . "forum`.`last_post` DESC LIMIT ".setting('core.forum_threads_per_page')." OFFSET ".($_page * setting('core.forum_threads_per_page')))->fetchAll(PDO::FETCH_ASSOC);
+$limit = (int)setting('core.forum_threads_per_page');
+$offset = $_page * $limit;
+$sql = "SELECT `players`.`id` as `player_id`, `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`first_post`, `" . FORUM_TABLE_PREFIX . "forum`.`post_text`, `" . FORUM_TABLE_PREFIX . "forum`.`post_topic`, `" . FORUM_TABLE_PREFIX . "forum`.`id`, `" . FORUM_TABLE_PREFIX . "forum`.`last_post`, `" . FORUM_TABLE_PREFIX . "forum`.`replies`, `" . FORUM_TABLE_PREFIX . "forum`.`views`, `" . FORUM_TABLE_PREFIX . "forum`.`post_date`, (SELECT `players`.`name` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` as f2 WHERE f2.`first_post` = `" . FORUM_TABLE_PREFIX . "forum`.`id` AND `players`.`id` = f2.`author_guid` ORDER BY f2.`post_date` DESC LIMIT 1) as last_post_author FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` AND `" . FORUM_TABLE_PREFIX . "forum`.`section` = :section_id AND `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = `" . FORUM_TABLE_PREFIX . "forum`.`id` ORDER BY `" . FORUM_TABLE_PREFIX . "forum`.`last_post` DESC LIMIT :limit OFFSET :offset";
+
+$query = $db->prepare($sql);
+$query->bindValue(':section_id', $section_id, PDO::PARAM_INT);
+$query->bindValue(':limit', $limit, PDO::PARAM_INT);
+$query->bindValue(':offset', $offset, PDO::PARAM_INT);
+$query->execute();
+$last_threads = $query->fetchAll(PDO::FETCH_ASSOC);
 
 if (isApiRequest()) {
 	$threads_json = [];

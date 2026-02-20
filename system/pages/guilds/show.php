@@ -164,13 +164,17 @@ if (isApiRequest()) {
 		];
 		/** @var OTS_Player $player */
 		foreach($rank_group['members'] as $player) {
-			$group['members'][] = [
-				'name' => $player->getName(),
-				'level' => $player->getLevel(),
-				'vocation' => $player->getVocationName(),
-				'online' => $player->isOnline(),
-				// ... other details
-			];
+			try {
+				$group['members'][] = [
+					'name' => $player->getName(),
+					'level' => $player->getLevel(),
+					'vocation' => $player->getVocationName(),
+					'online' => $player->isOnline(),
+					// ... other details
+				];
+			} catch (E_OTS_NotLoaded $e) {
+				continue;
+			}
 		}
 		$members_json[] = $group;
 	}
@@ -178,9 +182,13 @@ if (isApiRequest()) {
 	// Format invited list
 	$invites_json = [];
 	foreach($invited_list as $invite) {
-		$invites_json[] = [
-			'name' => $invite->getName()
-		];
+		try {
+			$invites_json[] = [
+				'name' => $invite->getName()
+			];
+		} catch (E_OTS_NotLoaded $e) {
+			continue;
+		}
 	}
 
 	jsonResponse([

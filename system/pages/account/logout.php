@@ -13,8 +13,14 @@ $title = 'Logout';
 
 require __DIR__ . '/base.php';
 
-if (isApiRequest() && !isRequestMethod('post')) {
-	jsonResponse(['errors' => ['Method not allowed']], 405);
+if (!isRequestMethod('post')) {
+	if (isApiRequest()) {
+		jsonResponse(['errors' => ['Method not allowed']], 405);
+	}
+
+	header('HTTP/1.1 405 Method Not Allowed');
+	echo 'Method Not Allowed. Logout requires POST.';
+	return;
 }
 
 if(!$logged) {
@@ -24,9 +30,7 @@ if(!$logged) {
 	return;
 }
 
-if (isRequestMethod('post')) {
-	csrfProtect();
-}
+csrfProtect();
 
 require SYSTEM . 'logout.php';
 

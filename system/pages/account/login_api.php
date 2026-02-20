@@ -33,23 +33,8 @@ if ($logged) {
             ]
         ];
     } catch (E_OTS_NotLoaded $e) {
-        $response = [
-            'logged' => true,
-            'account' => [
-                'id' => 0,
-                'name' => '',
-                'email' => '',
-                'created' => 0,
-                'prem_days' => 0,
-                'is_premium' => false,
-                'is_admin' => false,
-                'rlname' => '',
-                'location' => '',
-                'recovery_key_set' => false,
-                'email_new_time' => 0,
-                'email_new' => '',
-            ]
-        ];
+        error_log('Failed to load account details for a logged-in user: ' . $e->getMessage());
+        jsonResponse(['logged' => false, 'errors' => ['Failed to load account details. Please try again later.']], 500);
     }
     jsonResponse($response);
 } else {

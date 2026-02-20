@@ -34,7 +34,7 @@
   <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
     {#each monsters as monster}
       <a href="{base}/library/creatures/{encodeURIComponent(monster.name)}" class="border rounded p-4 flex flex-col items-center hover:bg-gray-50 transition">
-        <img src="{monster.img_link}" alt="{monster.name}" class="w-16 h-16 object-contain mb-2" />
+        <img src="{base}/{monster.img_link}" alt="{monster.name}" class="w-16 h-16 object-contain mb-2" />
         <span class="font-bold text-center">{monster.name}</span>
         <span class="text-sm text-gray-500">Exp: {monster.experience}</span>
       </a>

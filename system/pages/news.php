@@ -29,6 +29,7 @@ function getNewsCategories() {
 
 function getTickersData($limit) {
     global $db, $categories;
+    $limit = (int)$limit;
     $tickers_db = $db->query('SELECT * FROM `' . TABLE_PREFIX . 'news` WHERE `type` = ' . TICKER . ' AND `hide` != 1 ORDER BY `date` DESC LIMIT ' . $limit);
     $data = [];
     if($tickers_db->rowCount() > 0)

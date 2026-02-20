@@ -55,11 +55,11 @@
 
         <section class="mb-8">
             <h2 class="text-2xl font-bold mb-4">Members</h2>
-            {#each guildData.members as rankGroup}
+            {#each guildData.members ?? [] as rankGroup}
                 <div class="mb-6">
                     <h3 class="text-xl font-semibold mb-2">{rankGroup.rank_name}</h3>
                     <ul class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {#each rankGroup.members as member}
+                        {#each rankGroup.members ?? [] as member}
                             <li class="bg-gray-50 p-3 rounded flex items-center shadow-sm">
                                 <span class="w-3 h-3 rounded-full mr-2 {member.online ? 'bg-green-500' : 'bg-red-500'}"></span>
                                 <div>

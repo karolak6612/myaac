@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
@@ -37,8 +37,7 @@
     submitting = true;
     error = '';
     const form = new FormData();
-    for (const key in formData) {
-      // @ts-ignore
+    for (const key of Object.keys(formData) as (keyof typeof formData)[]) {
       const val = formData[key];
       if (typeof val === 'boolean') {
         if (val) {

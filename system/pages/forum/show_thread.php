@@ -108,24 +108,28 @@ foreach($posts as &$post) {
 if (isApiRequest()) {
 	$posts_json = [];
 	foreach($posts as $post) {
-		$posts_json[] = [
-			'id' => $post['id'],
-			'content' => $post['content'],
-			'date' => $post['date'],
-			'author' => [
-				'name' => $post['player']->getName(),
-				'vocation' => $post['vocation'],
-				'level' => $post['player']->getLevel(),
-				'group' => $post['group'],
-				'posts_count' => $post['author_posts_count'],
-				'outfit' => isset($post['outfit']) ? $post['outfit'] : null,
-				'guild_rank' => isset($post['guildRank']) ? strip_tags($post['guildRank']) : null
-			],
-			'edited' => isset($post['edited_by']) ? [
-				'by' => $post['edited_by'],
-				'date' => $post['edit_date']
-			] : null
-		];
+		try {
+			$posts_json[] = [
+				'id' => $post['id'],
+				'content' => $post['content'],
+				'date' => $post['date'],
+				'author' => [
+					'name' => $post['player']->getName(),
+					'vocation' => $post['vocation'],
+					'level' => $post['player']->getLevel(),
+					'group' => $post['group'],
+					'posts_count' => $post['author_posts_count'],
+					'outfit' => isset($post['outfit']) ? $post['outfit'] : null,
+					'guild_rank' => isset($post['guildRank']) ? strip_tags($post['guildRank']) : null
+				],
+				'edited' => isset($post['edited_by']) ? [
+					'by' => $post['edited_by'],
+					'date' => $post['edit_date']
+				] : null
+			];
+		} catch (E_OTS_NotLoaded $e) {
+			continue;
+		}
 	}
 
 	jsonResponse([
