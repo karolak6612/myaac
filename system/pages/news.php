@@ -49,9 +49,17 @@ if(isset($_GET['archive']))
 			}
 
 			if (isApiRequest()) {
-				$news['author'] = $author;
-				$news['icon'] = $categories[$news['category']]['icon_id'];
-				jsonResponse(['news' => $news]);
+				jsonResponse(['news' => [
+					'id' => $news['id'],
+					'title' => $news['title'],
+					'body' => $news['body'],
+					'date' => $news['date'],
+					'category' => $news['category'],
+					'author' => $author,
+					'icon' => $categories[$news['category']]['icon_id'],
+					'comments' => $news['comments'],
+					'hide' => $news['hide']
+				]]);
 			}
 
 			$content_ = $news['body'];
@@ -138,11 +146,18 @@ if (isApiRequest()) {
 	$response['tickers'] = [];
 	if($tickers_db->rowCount() > 0)
 	{
-		$response['tickers'] = $tickers_db->fetchAll();
-		foreach($response['tickers'] as &$ticker) {
-			$ticker['icon'] = $categories[$ticker['category']]['icon_id'];
-			$ticker['body_short'] = short_text(strip_tags($ticker['body']), 100);
-			$ticker['hidden'] = $ticker['hide'];
+		$raw_tickers = $tickers_db->fetchAll();
+		foreach($raw_tickers as $ticker) {
+			$response['tickers'][] = [
+				'id' => $ticker['id'],
+				'title' => $ticker['title'],
+				'body' => $ticker['body'],
+				'date' => $ticker['date'],
+				'category' => $ticker['category'],
+				'icon' => $categories[$ticker['category']]['icon_id'],
+				'body_short' => short_text(strip_tags($ticker['body']), 100),
+				'hidden' => $ticker['hide']
+			];
 		}
 	}
 
@@ -156,8 +171,8 @@ if (isApiRequest()) {
 	$response['news'] = [];
 	if($newses->rowCount() > 0)
 	{
-		$response['news'] = $newses->fetchAll();
-		foreach($response['news'] as &$news)
+		$raw_news = $newses->fetchAll();
+		foreach($raw_news as $news)
 		{
 			$author = '';
 			$query = $db->query('SELECT `name` FROM `players` WHERE id = ' . $db->quote($news['player_id']) . ' LIMIT 1');
@@ -165,8 +180,19 @@ if (isApiRequest()) {
 				$query = $query->fetch();
 				$author = $query['name'];
 			}
-			$news['author'] = $author;
-			$news['icon'] = $categories[$news['category']]['icon_id'];
+
+			$response['news'][] = [
+				'id' => $news['id'],
+				'title' => $news['title'],
+				'body' => $news['body'],
+				'date' => $news['date'],
+				'category' => $news['category'],
+				'player_id' => $news['player_id'],
+				'author' => $author,
+				'icon' => $categories[$news['category']]['icon_id'],
+				'comments' => $news['comments'],
+				'hide' => $news['hide']
+			];
 		}
 	}
 

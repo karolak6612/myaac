@@ -22,18 +22,6 @@
         content = data.content;
         currentPage = data.page;
 
-        // Handle scripts in content
-        setTimeout(() => {
-             const scripts = document.getElementById('admin-content')?.getElementsByTagName('script');
-             if (scripts) {
-                 for (let i = 0; i < scripts.length; i++) {
-                     const script = document.createElement('script');
-                     script.text = scripts[i].text;
-                     document.body.appendChild(script);
-                 }
-             }
-        }, 100);
-
       } else {
         error = 'Failed to load admin page.';
       }

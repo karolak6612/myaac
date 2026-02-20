@@ -44,7 +44,7 @@ if (!isApiRequest()) {
     else {
         // Serve Svelte App for non-static, non-API requests
         if (file_exists(BASE . 'index.html')) {
-            require BASE . 'index.html';
+            readfile(BASE . 'index.html');
             exit;
         }
     }

@@ -13,7 +13,7 @@
     formData.append('password_login', password_login);
 
     try {
-      const response = await fetch('/account/manage?api=1', {
+      const response = await fetch('/account/login_api?api=1', {
         method: 'POST',
         body: formData
       });
