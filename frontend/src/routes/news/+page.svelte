@@ -1,13 +1,22 @@
 <script>
     import { base } from '$app/paths';
-    import DOMPurify from 'dompurify';
-    export let data;
+    import { onMount } from 'svelte';
 
-    $: ({ newsData } = data);
-    $: news = newsData.news || [];
-    $: tickers = newsData.tickers || [];
-    $: article = newsData.article || null;
+    let { data } = $props();
+    /** @type {any} */
+    let DOMPurify = $state(null);
 
+    onMount(async () => {
+        const module = await import('dompurify');
+        DOMPurify = module.default;
+    });
+
+    let newsData = $derived(data.newsData);
+    let news = $derived(newsData.news || []);
+    let tickers = $derived(newsData.tickers || []);
+    let article = $derived(newsData.article || null);
+
+    /** @param {number} timestamp */
     function formatDate(timestamp) {
         if (!timestamp) return '';
         return new Date(timestamp * 1000).toLocaleString();
@@ -38,7 +47,9 @@
             <img src="{base}/{article.image}" alt="Article Image" class="mb-4 w-full h-auto" />
         {/if}
         <div class="prose max-w-none">
-            {@html DOMPurify.sanitize(article.text)}
+            {#if DOMPurify}
+                {@html DOMPurify.sanitize(article.text)}
+            {/if}
         </div>
     </article>
 {/if}
@@ -59,11 +70,13 @@
                 </div>
             </header>
             <div class="prose max-w-none">
-                {@html DOMPurify.sanitize(item.body)}
+                {#if DOMPurify}
+                    {@html DOMPurify.sanitize(item.body)}
+                {/if}
             </div>
             {#if item.comments}
                 <div class="mt-4 pt-2 border-t text-sm text-right">
-                    <a href="{base}/forum/thread/{item.comments}" class="text-blue-500 hover:underline">Read Comments</a>
+                    <a href={base + '/forum/thread/' + item.comments} class="text-blue-500 hover:underline">Read Comments</a>
                 </div>
             {/if}
         </article>

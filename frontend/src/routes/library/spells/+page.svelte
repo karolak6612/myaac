@@ -2,17 +2,26 @@
   import { onMount } from 'svelte';
   import { base } from '$app/paths';
 
+  /** @type {any[]} */
   let spells = [];
   let vocations = {};
   let selectedVocation = 'all';
   let loading = true;
   let error = '';
+  /** @type {AbortController | null} */
+  let currentAbortController = null;
 
   async function loadData() {
+    if (currentAbortController) {
+      currentAbortController.abort();
+    }
+    currentAbortController = new AbortController();
+    const signal = currentAbortController.signal;
+
     loading = true;
     error = '';
     try {
-      const response = await fetch(`${base}/spells?api=1&vocation=${encodeURIComponent(selectedVocation)}`);
+      const response = await fetch(`${base}/spells?api=1&vocation=${encodeURIComponent(selectedVocation)}`, { signal });
       if (response.ok) {
         const data = await response.json();
         spells = data.spells || [];
@@ -21,16 +30,15 @@
         error = 'Failed to load spells.';
       }
     } catch (e) {
-      console.error(e);
-      error = 'Failed to load spells.';
+      if (e instanceof Error && e.name !== 'AbortError') {
+        console.error(e);
+        error = 'Failed to load spells.';
+      }
     } finally {
-        loading = false;
+        if (!signal.aborted) {
+            loading = false;
+        }
     }
-  }
-
-  function changeVocation(newVocation) {
-      selectedVocation = newVocation;
-      loadData();
   }
 
   onMount(loadData);
@@ -38,14 +46,20 @@
 
 <h1 class="text-2xl font-bold mb-4">Spells Library</h1>
 
-{#if loading && spells.length === 0}
-  <p>Loading...</p>
-{:else if error}
-  <p style="color: red">{error}</p>
-{:else}
+{#if error}
+  <p class="text-red-500">{error}</p>
+{/if}
+
+<div class="relative">
+    {#if loading}
+        <div class="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+            <span class="text-xl font-bold text-gray-700">Loading...</span>
+        </div>
+    {/if}
+
     <div class="mb-4">
         <label for="vocation" class="mr-2">Filter by Vocation:</label>
-        <select id="vocation" bind:value={selectedVocation} on:change={() => changeVocation(selectedVocation)} class="border p-2 rounded">
+        <select id="vocation" bind:value={selectedVocation} on:change={loadData} disabled={loading} class="border p-2 rounded">
             <option value="all">All Vocations</option>
             {#each Object.entries(vocations) as [id, name]}
                  {#if id !== '0'}
@@ -77,4 +91,4 @@
             {/each}
         </tbody>
     </table>
-{/if}
+</div>

@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  import { user, loggedIn, loading } from '$lib/stores/auth';
+  import { user, loggedIn, loading } from '$lib/stores/auth.svelte';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
 
@@ -8,9 +8,11 @@
   let players = [];
   let error = '';
 
-  $: if (!$loading && !$loggedIn) {
-    goto('/account/login');
-  }
+  $effect(() => {
+    if (!loading.value && !loggedIn.value) {
+        goto(`${base}/account/login`);
+    }
+  });
 
   onMount(async () => {
     try {
@@ -20,11 +22,11 @@
         if (data.logged) {
           accountData = data.account;
           players = data.players || [];
-          user.set(data.account);
-          loggedIn.set(true);
+          user.value = data.account;
+          loggedIn.value = true;
         } else {
-            loggedIn.set(false);
-            goto('/account/login');
+            loggedIn.value = false;
+            goto(`${base}/account/login`);
         }
       } else {
         error = 'Failed to load account data.';
@@ -54,9 +56,9 @@
           credentials: 'same-origin'
       });
       if (response.ok) {
-        loggedIn.set(false);
-        user.set(null);
-        goto('/');
+        loggedIn.value = false;
+        user.value = null;
+        goto(`${base}/`);
       }
     } catch (e) {
       console.error(e);
@@ -64,9 +66,9 @@
   }
 </script>
 
-{#if $loading}
+{#if loading.value}
   <p>Loading...</p>
-{:else if $loggedIn && accountData}
+{:else if loggedIn.value && accountData}
   <h1>Welcome, {accountData.name}</h1>
   <button on:click={logout}>Logout</button>
 
@@ -90,5 +92,5 @@
     </ul>
   {/if}
 {:else if error}
-  <p style="color: red">{error}</p>
+  <p class="text-red-500">{error}</p>
 {/if}

@@ -1,7 +1,8 @@
 <script>
   import { goto } from '$app/navigation';
-  import { user, loggedIn } from '$lib/stores/auth';
+  import { user, loggedIn } from '$lib/stores/auth.svelte';
   import { onMount } from 'svelte';
+  import { base } from '$app/paths';
 
   let account_login = '';
   let password_login = '';
@@ -10,7 +11,7 @@
 
   onMount(async () => {
     try {
-        const res = await fetch('/account/csrf?api=1');
+        const res = await fetch(`${base}/account/csrf?api=1`);
         if (res.ok) {
             const data = await res.json();
             csrf_token = data.csrf_token;
@@ -30,7 +31,7 @@
     }
 
     try {
-      const response = await fetch('/account/login_api?api=1', {
+      const response = await fetch(`${base}/account/login_api?api=1`, {
         method: 'POST',
         body: formData,
         credentials: 'same-origin'
@@ -51,9 +52,9 @@
       }
 
       if (data.logged) {
-        loggedIn.set(true);
-        user.set(data.account);
-        goto('/account/manage');
+        loggedIn.value = true;
+        user.value = data.account;
+        goto(`${base}/account/manage`);
       } else {
         error = data.errors ? data.errors.join(', ') : 'Login failed';
       }
