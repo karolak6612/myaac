@@ -20,12 +20,18 @@
   onMount(async () => {
     try {
       const response = await fetch(`${base}/account/create?api=1`);
-      if (response.ok) {
-        const data = await response.json();
-        config = data.config;
-        countries = data.countries || {};
-        csrf_token = data.csrf_token;
+
+      if (!response.ok) {
+          error = `Failed to load registration form configuration. Status: ${response.status}`;
+          console.error('Failed to load registration form configuration', response);
+          return;
       }
+
+      const data = await response.json();
+      config = data.config;
+      countries = data.countries || {};
+      csrf_token = data.csrf_token;
+
     } catch (e) {
       console.error(e);
       error = 'Failed to load registration form configuration.';
@@ -132,6 +138,6 @@
   <button type="submit" disabled={submitting}>{submitting ? 'Registering...' : 'Register'}</button>
 
   {#if error}
-    <p style="color: red">{error}</p>
+    <p class="text-red-500">{error}</p>
   {/if}
 </form>

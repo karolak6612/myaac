@@ -31,6 +31,7 @@ $vocation = urldecode($_GET['vocation'] ?? 'all');
 if(!is_numeric($page) || $page < 1 || $page > PHP_INT_MAX) {
 	$page = 1;
 }
+$page = (int)$page;
 
 $query = Player::query();
 

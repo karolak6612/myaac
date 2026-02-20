@@ -121,11 +121,12 @@ if(isset($last_threads[0])) {
 
 		echo '<a href="' . getForumThreadLink($thread['id']) . '">'.htmlspecialchars($thread['post_topic']). '</a><br /><small>'.($canEditForum ? substr(strip_tags($thread['post_text']), 0, 50) : htmlspecialchars(substr($thread['post_text'], 0, 50))).'...</small></td><td>' . getPlayerLink($thread['name']) . '</td><td>'.(int) $thread['replies'].'</td><td>'.(int) $thread['views'].'</td><td>';
 		if($thread['last_post'] > 0) {
+			echo date('d.m.y H:i:s', $thread['last_post']);
 			if(isset($thread['last_post_author'])) {
-				echo date('d.m.y H:i:s', $thread['last_post']) . '<br />by ' . getPlayerLink($thread['last_post_author']);
+				echo '<br />by ' . getPlayerLink($thread['last_post_author']);
 			}
 			else {
-				echo 'No posts.';
+				echo '<br />by [Deleted]';
 			}
 		}
 		else {

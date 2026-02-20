@@ -50,7 +50,7 @@
             {#each boards as board}
                 <tr class="hover:bg-gray-50">
                     <td class="border p-3">
-                        <a href="/forum/board/{board.id}" class="font-bold text-blue-600 hover:underline">{board.name}</a>
+                        <a href="{base}/forum/board/{board.id}" class="font-bold text-blue-600 hover:underline">{board.name}</a>
                         <p class="text-sm text-gray-600">{board.description}</p>
                     </td>
                     <td class="border p-3 text-center">{board.threads}</td>

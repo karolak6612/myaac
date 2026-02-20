@@ -28,7 +28,7 @@
           loggedIn.value = true;
         } else {
             if (data.logged) {
-                console.warn('Invalid user data received', data.account);
+                console.warn('Invalid user data received');
             }
             loggedIn.value = false;
             user.value = null;

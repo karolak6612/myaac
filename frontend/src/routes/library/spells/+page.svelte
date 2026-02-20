@@ -63,7 +63,7 @@
             <option value="all">All Vocations</option>
             {#each Object.entries(vocations) as [id, name]}
                  {#if id !== '0'}
-                    <option value={name.toLowerCase()}>{name}</option>
+                    <option value={id}>{name}</option>
                  {/if}
             {/each}
         </select>

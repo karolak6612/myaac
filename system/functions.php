@@ -1788,7 +1788,10 @@ function jsonResponse($data, $status = 200): void
         echo json_encode($data, JSON_THROW_ON_ERROR);
     } catch (JsonException $e) {
         http_response_code(500);
-        echo json_encode(['error' => 'JSON encoding error: ' . $e->getMessage()]);
+        if (defined('MYAAC_DEBUG') && MYAAC_DEBUG) {
+            log_append('error.log', 'JSON encoding error: ' . $e->getMessage());
+        }
+        echo json_encode(['error' => 'JSON encoding error']);
     }
     exit;
 }

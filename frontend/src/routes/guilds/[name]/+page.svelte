@@ -41,7 +41,7 @@
 {:else if guildData}
     <div class="container mx-auto p-4">
         <header class="flex items-center mb-6">
-            <img src="{base}/images/guilds/{guildData.guild.logo}" alt="Guild Logo" class="w-24 h-24 rounded shadow mr-6" />
+            <img src="{base}/images/guilds/{guildData.guild.logo}" alt="{guildData.guild.name} Logo" class="w-24 h-24 rounded shadow mr-6" />
             <div>
                 <h1 class="text-4xl font-bold">{guildData.guild.name}</h1>
                 <p class="text-gray-600">Created on {guildData.guild.creation_date_formatted}</p>

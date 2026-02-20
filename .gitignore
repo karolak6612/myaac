@@ -21,6 +21,8 @@ plugins/*
 templates/*
 !plugins/example.json
 !templates/index.html
+!templates/kathrine/
+!templates/tibiacom/
 cypress.env.json
 cypress/screenshots
 *.log

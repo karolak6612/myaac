@@ -23,12 +23,16 @@
 
   async function handleSubmit() {
     error = '';
+
+    if (!csrf_token) {
+        error = 'Unable to submit: missing CSRF token, please refresh the page.';
+        return;
+    }
+
     const formData = new FormData();
     formData.append('account_login', account_login);
     formData.append('password_login', password_login);
-    if (csrf_token) {
-        formData.append('csrf_token', csrf_token);
-    }
+    formData.append('csrf_token', csrf_token);
 
     try {
       const response = await fetch(`${base}/account/login_api?api=1`, {
@@ -76,7 +80,7 @@
     <label for="password_login">Password:</label>
     <input id="password_login" type="password" bind:value={password_login} required />
   </div>
-  <button type="submit">Login</button>
+  <button type="submit" disabled={!csrf_token}>Login</button>
 
   {#if error}
     <p class="text-red-500">{error}</p>

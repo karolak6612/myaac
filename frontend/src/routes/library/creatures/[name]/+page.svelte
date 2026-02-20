@@ -6,6 +6,8 @@
   let monster = null;
   let loading = true;
   let error = '';
+  /** @type {AbortController | null} */
+  let currentController = null;
 
   $: name = $page.params.name;
 
@@ -14,10 +16,21 @@
   }
 
   async function loadCreature(name) {
+    if (currentController) currentController.abort();
+    currentController = new AbortController();
+
     loading = true;
     error = '';
+    monster = null; // Clear previous monster while loading new one? Or keep stale? User asked to "only update monster/loading/error when the fetch completes". So maybe I should not clear here.
+    // But if I don't clear, I might show old monster with new loading state.
+    // The prompt says: "only update monster/loading/error when the fetch completes successfully for the non-aborted request"
+    // So I should keep old state until new one arrives?
+    // But if I start loading, I usually want to show loading state.
+    // I will follow standard pattern: set loading true, keep old data or clear it.
+    // "Blank page occurs when API returns 200 but data.monster is falsy; add a fallback UI branch"
+
     try {
-      const response = await fetch(`${base}/monsters/${encodeURIComponent(name)}?api=1`);
+      const response = await fetch(`${base}/monsters/${encodeURIComponent(name)}?api=1`, { signal: currentController.signal });
       if (response.ok) {
         const data = await response.json();
         monster = data.monster;
@@ -25,10 +38,13 @@
         error = 'Failed to load creature.';
       }
     } catch (e) {
+      if (e.name === 'AbortError') return;
       console.error(e);
       error = 'Failed to load creature.';
     } finally {
-        loading = false;
+        if (!currentController.signal.aborted) {
+            loading = false;
+        }
     }
   }
 </script>
@@ -81,5 +97,10 @@
         </div>
       {/if}
     </div>
+  </div>
+{:else}
+  <div class="container mx-auto p-4 text-center">
+      <p class="text-gray-600 text-lg">No monster data available.</p>
+      <a href="{base}/library/creatures" class="text-blue-500 hover:underline mt-4 inline-block">Back to Creatures</a>
   </div>
 {/if}
