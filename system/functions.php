@@ -1133,6 +1133,10 @@ function isValidToken(): bool {
 function csrfProtect(): void
 {
 	if (!isValidToken()) {
+        if (isApiRequest()) {
+            jsonResponse(['error' => 'Invalid CSRF token'], 403);
+        }
+
 		$lastUri = BASE_URL . str_replace_first('/', '', getSession('last_uri'));
 		echo 'Request has been cancelled due to security reasons - token is invalid. Go <a href="' . $lastUri . '">back</a>';
 		exit();
@@ -1776,11 +1780,16 @@ function isApiRequest()
     return false;
 }
 
-function jsonResponse($data, $status = 200)
+function jsonResponse($data, $status = 200): void
 {
     http_response_code($status);
     header('Content-Type: application/json');
-    echo json_encode($data);
+    try {
+        echo json_encode($data, JSON_THROW_ON_ERROR);
+    } catch (JsonException $e) {
+        http_response_code(500);
+        echo json_encode(['error' => 'JSON encoding error: ' . $e->getMessage()]);
+    }
     exit;
 }
 

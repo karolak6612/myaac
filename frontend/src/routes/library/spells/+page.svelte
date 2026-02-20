@@ -12,7 +12,7 @@
     loading = true;
     error = '';
     try {
-      const response = await fetch(`/spells?api=1&vocation=${selectedVocation}`);
+      const response = await fetch(`${base}/spells?api=1&vocation=${encodeURIComponent(selectedVocation)}`);
       if (response.ok) {
         const data = await response.json();
         spells = data.spells || [];

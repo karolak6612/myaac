@@ -34,11 +34,11 @@
 {#if article}
     <article class="featured-article bg-white p-6 rounded shadow mb-6">
         <h2 class="text-2xl font-bold mb-4">{article.title}</h2>
-        {#if article.article_image}
-            <img src="{base}/{article.article_image}" alt="Article Image" class="mb-4 w-full h-auto" />
+        {#if article.image}
+            <img src="{base}/{article.image}" alt="Article Image" class="mb-4 w-full h-auto" />
         {/if}
         <div class="prose max-w-none">
-            {@html DOMPurify.sanitize(article.article_text)}
+            {@html DOMPurify.sanitize(article.text)}
         </div>
     </article>
 {/if}
@@ -63,7 +63,7 @@
             </div>
             {#if item.comments}
                 <div class="mt-4 pt-2 border-t text-sm text-right">
-                    <a href="{item.comments}" class="text-blue-500 hover:underline">Read Comments</a>
+                    <a href="{base}/forum/thread/{item.comments}" class="text-blue-500 hover:underline">Read Comments</a>
                 </div>
             {/if}
         </article>

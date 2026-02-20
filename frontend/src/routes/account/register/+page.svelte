@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
 
   let formData = {
     account: '',
@@ -18,7 +19,7 @@
 
   onMount(async () => {
     try {
-      const response = await fetch('/account/create?api=1');
+      const response = await fetch(`${base}/account/create?api=1`);
       if (response.ok) {
         const data = await response.json();
         config = data.config;
@@ -37,7 +38,15 @@
     error = '';
     const form = new FormData();
     for (const key in formData) {
-      form.append(key, formData[key]);
+      // @ts-ignore
+      const val = formData[key];
+      if (typeof val === 'boolean') {
+        if (val) {
+          form.append(key, '1');
+        }
+      } else {
+        form.append(key, val);
+      }
     }
     form.append('save', '1');
     if (csrf_token) {
@@ -45,7 +54,7 @@
     }
 
     try {
-      const response = await fetch('/account/create?api=1', {
+      const response = await fetch(`${base}/account/create?api=1`, {
         method: 'POST',
         body: form
       });
@@ -64,7 +73,7 @@
       }
 
       if (data.success) {
-        goto('/account/login');
+        goto(`${base}/account/login`);
       } else {
         error = data.message || 'Registration failed.';
       }
