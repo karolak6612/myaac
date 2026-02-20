@@ -1,30 +1,55 @@
 <script>
   import { goto } from '$app/navigation';
   import { user, loggedIn } from '$lib/stores/auth';
+  import { onMount } from 'svelte';
 
   let account_login = '';
   let password_login = '';
   let error = '';
+  let csrf_token = '';
+
+  onMount(async () => {
+    try {
+        const res = await fetch('/account/csrf?api=1');
+        if (res.ok) {
+            const data = await res.json();
+            csrf_token = data.csrf_token;
+        }
+    } catch (e) {
+        console.error('Failed to fetch CSRF token', e);
+    }
+  });
 
   async function handleSubmit() {
     error = '';
     const formData = new FormData();
     formData.append('account_login', account_login);
     formData.append('password_login', password_login);
+    if (csrf_token) {
+        formData.append('csrf_token', csrf_token);
+    }
 
     try {
       const response = await fetch('/account/login_api?api=1', {
         method: 'POST',
-        body: formData
+        body: formData,
+        credentials: 'same-origin'
       });
 
+      // Safe JSON parsing
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.indexOf('application/json') !== -1) {
+          data = await response.json();
+      } else {
+          data = { errors: ['An error occurred.'] };
+      }
+
       if (!response.ok) {
-        const err = await response.json();
-        error = err.errors ? err.errors.join(', ') : 'Login failed';
+        error = data.errors ? data.errors.join(', ') : 'Login failed';
         return;
       }
 
-      const data = await response.json();
       if (data.logged) {
         loggedIn.set(true);
         user.set(data.account);
@@ -53,6 +78,6 @@
   <button type="submit">Login</button>
 
   {#if error}
-    <p style="color: red">{error}</p>
+    <p class="text-red-500">{error}</p>
   {/if}
 </form>

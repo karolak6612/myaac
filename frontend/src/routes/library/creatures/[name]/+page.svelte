@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
 
   let monster = null;
   let loading = true;
@@ -8,11 +9,15 @@
 
   $: name = $page.params.name;
 
-  onMount(async () => {
+  $: if (name) {
+      loadCreature(name);
+  }
+
+  async function loadCreature(name) {
     loading = true;
     error = '';
     try {
-      const response = await fetch(`/monsters/${name}?api=1`);
+      const response = await fetch(`${base}/monsters/${encodeURIComponent(name)}?api=1`);
       if (response.ok) {
         const data = await response.json();
         monster = data.monster;
@@ -25,7 +30,7 @@
     } finally {
         loading = false;
     }
-  });
+  }
 </script>
 
 {#if loading}

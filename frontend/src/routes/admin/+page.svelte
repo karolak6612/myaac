@@ -3,6 +3,8 @@
   import { user, loggedIn, loading } from '$lib/stores/auth';
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import { base } from '$app/paths';
+  import DOMPurify from 'dompurify';
 
   let content = '';
   let currentPage = 'dashboard';
@@ -16,7 +18,7 @@
 
   async function loadPage(p) {
     try {
-      const response = await fetch(`/admin/?api=1&p=${p}`);
+      const response = await fetch(`${base}/admin/?api=1&p=${p}`);
       if (response.ok) {
         const data = await response.json();
         content = data.content;
@@ -73,7 +75,7 @@
                 <span class="block sm:inline">{error}</span>
             </div>
         {:else}
-            {@html content}
+            {@html DOMPurify.sanitize(content)}
         {/if}
      </div>
   </main>

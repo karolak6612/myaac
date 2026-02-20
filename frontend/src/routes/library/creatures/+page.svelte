@@ -8,7 +8,7 @@
 
   onMount(async () => {
     try {
-      const response = await fetch('/monsters?api=1');
+      const response = await fetch(`${base}/monsters?api=1`);
       if (response.ok) {
         const data = await response.json();
         monsters = data.monsters || [];

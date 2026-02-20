@@ -7,29 +7,37 @@
   let error = '';
   let loading = true;
   let currentPage = 0;
+  let abortController = null;
 
   $: id = $page.params.id;
 
+  $: if (id) {
+      currentPage = 0;
+      loadData(0);
+  }
+
   async function loadData(pageIndex = 0) {
+    if (abortController) abortController.abort();
+    abortController = new AbortController();
+
     loading = true;
     error = '';
     try {
-      const response = await fetch(`/forum/board/${id}/${pageIndex}?api=1`);
+      const response = await fetch(`${base}/forum/board/${id}/${pageIndex}?api=1`, { signal: abortController.signal });
       if (response.ok) {
         boardData = await response.json();
         currentPage = boardData.page;
       } else {
         error = 'Failed to load board data.';
       }
+      loading = false;
     } catch (e) {
+      if (e.name === 'AbortError') return;
       console.error(e);
       error = 'Failed to load board data.';
-    } finally {
-        loading = false;
+      loading = false;
     }
   }
-
-  onMount(() => loadData(0));
 
   function formatDate(timestamp) {
     if (!timestamp) return 'Never';

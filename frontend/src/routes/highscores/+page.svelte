@@ -8,22 +8,27 @@
   let data = null;
   let error = '';
   let loading = false;
+  let abortController = null;
 
   async function loadData() {
+    if (abortController) abortController.abort();
+    abortController = new AbortController();
+
     loading = true;
     error = '';
     try {
-      const response = await fetch(`/highscores/${list}/${vocation}/${page}?api=1`);
+      const response = await fetch(`${base}/highscores/${list}/${vocation}/${page}?api=1`, { signal: abortController.signal });
       if (response.ok) {
         data = await response.json();
       } else {
         error = 'Failed to load highscores.';
       }
+      loading = false;
     } catch (e) {
+      if (e.name === 'AbortError') return;
       console.error(e);
       error = 'Failed to load highscores.';
-    } finally {
-        loading = false;
+      loading = false;
     }
   }
 
@@ -90,8 +95,8 @@
     </table>
 
     <div class="pagination mt-4 flex gap-2">
-        <button disabled={page <= 1} on:click={() => { page--; loadData(); }} class="border p-2">Previous</button>
+        <button disabled={page <= 1} on:click={() => { page--; loadData(); }} class="border p-2 disabled:opacity-50">Previous</button>
         <span class="p-2">Page {page}</span>
-        <button on:click={() => { page++; loadData(); }} class="border p-2">Next</button>
+        <button disabled={data.totalResults !== undefined && page * data.perPage >= data.totalResults} on:click={() => { page++; loadData(); }} class="border p-2 disabled:opacity-50">Next</button>
     </div>
 {/if}

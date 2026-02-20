@@ -10,11 +10,16 @@
 
   $: name = $page.params.name;
 
-  onMount(async () => {
+  $: if (name) {
+      loadGuild(name);
+  }
+
+  async function loadGuild(name) {
     loading = true;
     error = '';
+    guildData = null;
     try {
-      const response = await fetch(`/guilds/${name}?api=1`);
+      const response = await fetch(`${base}/guilds/${encodeURIComponent(name)}?api=1`);
       if (response.ok) {
         guildData = await response.json();
       } else {
@@ -26,7 +31,7 @@
     } finally {
         loading = false;
     }
-  });
+  }
 </script>
 
 {#if loading}

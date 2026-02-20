@@ -48,15 +48,7 @@ for($i = 0; $i < $threads_count['threads_count'] / setting('core.forum_threads_p
 		$links_to_pages .= '<b>'.($i + 1).' </b>';
 }
 
-echo '<a href="' . getLink('forum') . '">Boards</a> >> <b>'.escapeHtml($sections[$section_id]['name']).'</b>';
-
-if($logged && (!$sections[$section_id]['closed'] || Forum::isModerator())) {
-	echo '<br /><br />
-		<a href="' . getLink('forum') . '?action=new_thread&section_id='.$section_id.'"><img src="images/forum/topic.gif" border="0" /></a>';
-}
-
-echo '<br /><br />Page: '.$links_to_pages.'<br />';
-$last_threads = $db->query("SELECT `players`.`id` as `player_id`, `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`first_post`, `" . FORUM_TABLE_PREFIX . "forum`.`post_text`, `" . FORUM_TABLE_PREFIX . "forum`.`post_topic`, `" . FORUM_TABLE_PREFIX . "forum`.`id`, `" . FORUM_TABLE_PREFIX . "forum`.`last_post`, `" . FORUM_TABLE_PREFIX . "forum`.`replies`, `" . FORUM_TABLE_PREFIX . "forum`.`views`, `" . FORUM_TABLE_PREFIX . "forum`.`post_date` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` AND `" . FORUM_TABLE_PREFIX . "forum`.`section` = ".$section_id." AND `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = `" . FORUM_TABLE_PREFIX . "forum`.`id` ORDER BY `" . FORUM_TABLE_PREFIX . "forum`.`last_post` DESC LIMIT ".setting('core.forum_threads_per_page')." OFFSET ".($_page * setting('core.forum_threads_per_page')))->fetchAll(PDO::FETCH_ASSOC);
+$last_threads = $db->query("SELECT `players`.`id` as `player_id`, `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`first_post`, `" . FORUM_TABLE_PREFIX . "forum`.`post_text`, `" . FORUM_TABLE_PREFIX . "forum`.`post_topic`, `" . FORUM_TABLE_PREFIX . "forum`.`id`, `" . FORUM_TABLE_PREFIX . "forum`.`last_post`, `" . FORUM_TABLE_PREFIX . "forum`.`replies`, `" . FORUM_TABLE_PREFIX . "forum`.`views`, `" . FORUM_TABLE_PREFIX . "forum`.`post_date`, (SELECT `players`.`name` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` as f2 WHERE f2.`first_post` = `" . FORUM_TABLE_PREFIX . "forum`.`id` AND `players`.`id` = f2.`author_guid` ORDER BY f2.`post_date` DESC LIMIT 1) as last_post_author FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` AND `" . FORUM_TABLE_PREFIX . "forum`.`section` = ".$section_id." AND `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = `" . FORUM_TABLE_PREFIX . "forum`.`id` ORDER BY `" . FORUM_TABLE_PREFIX . "forum`.`last_post` DESC LIMIT ".setting('core.forum_threads_per_page')." OFFSET ".($_page * setting('core.forum_threads_per_page')))->fetchAll(PDO::FETCH_ASSOC);
 
 if (isApiRequest()) {
 	$threads_json = [];
@@ -71,14 +63,9 @@ if (isApiRequest()) {
 			'last_post_author' => $thread['name'], // default
 		];
 
-		if($thread['last_post'] > 0) {
-			$last_post = $db->query("SELECT `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`post_date` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = ".(int) $thread['id']." AND `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` ORDER BY `post_date` DESC LIMIT 1")->fetch();
-
-			if(isset($last_post['name'])) {
-				$thread_data['last_post_author'] = $last_post['name'];
-				$thread_data['last_post_date'] = $last_post['post_date'];
-			}
-		}
+        if($thread['last_post'] > 0 && isset($thread['last_post_author'])) {
+            $thread_data['last_post_author'] = $thread['last_post_author'];
+        }
 
 		$threads_json[] = $thread_data;
 	}
@@ -96,6 +83,14 @@ if (isApiRequest()) {
 	]);
 }
 
+echo '<a href="' . getLink('forum') . '">Boards</a> >> <b>'.escapeHtml($sections[$section_id]['name']).'</b>';
+
+if($logged && (!$sections[$section_id]['closed'] || Forum::isModerator())) {
+	echo '<br /><br />
+		<a href="' . getLink('forum') . '?action=new_thread&section_id='.$section_id.'"><img src="images/forum/topic.gif" border="0" /></a>';
+}
+
+echo '<br /><br />Page: '.$links_to_pages.'<br />';
 
 if(isset($last_threads[0])) {
 	echo '<table width="100%">
@@ -126,10 +121,8 @@ if(isset($last_threads[0])) {
 
 		echo '<a href="' . getForumThreadLink($thread['id']) . '">'.htmlspecialchars($thread['post_topic']). '</a><br /><small>'.($canEditForum ? substr(strip_tags($thread['post_text']), 0, 50) : htmlspecialchars(substr($thread['post_text'], 0, 50))).'...</small></td><td>' . getPlayerLink($thread['name']) . '</td><td>'.(int) $thread['replies'].'</td><td>'.(int) $thread['views'].'</td><td>';
 		if($thread['last_post'] > 0) {
-			$last_post = $db->query("SELECT `players`.`name`, `" . FORUM_TABLE_PREFIX . "forum`.`post_date` FROM `players`, `" . FORUM_TABLE_PREFIX . "forum` WHERE `" . FORUM_TABLE_PREFIX . "forum`.`first_post` = ".(int) $thread['id']." AND `players`.`id` = `" . FORUM_TABLE_PREFIX . "forum`.`author_guid` ORDER BY `post_date` DESC LIMIT 1")->fetch();
-
-			if(isset($last_post['name'])) {
-				echo date('d.m.y H:i:s', $last_post['post_date']) . '<br />by ' . getPlayerLink($last_post['name']);
+			if(isset($thread['last_post_author'])) {
+				echo date('d.m.y H:i:s', $thread['last_post']) . '<br />by ' . getPlayerLink($thread['last_post_author']);
 			}
 			else {
 				echo 'No posts.';
