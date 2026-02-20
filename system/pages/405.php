@@ -10,6 +10,10 @@
 defined('MYAAC') or die('Direct access not allowed!');
 $title = 'Method Not Allowed';
 
+if (isApiRequest()) {
+	jsonResponse(['error' => 'Method Not Allowed', 'url' => $_SERVER['REQUEST_URI'], 'method' => $_SERVER['REQUEST_METHOD']], 405);
+}
+
 header('HTTP/1.0 405 Method Not Allowed');
 ?>
 <h1>Method not allowed</h1>

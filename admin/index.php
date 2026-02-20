@@ -41,6 +41,9 @@ if (ACTION == 'logout') {
 
 // if we're not logged in - show login box
 if(!$logged || !admin()) {
+	if (isApiRequest()) {
+		jsonResponse(['error' => 'Unauthorized', 'status' => 'error'], 401);
+	}
 	$page = 'login';
 }
 
@@ -69,6 +72,10 @@ if($hooks->trigger(HOOK_ADMIN_BEFORE_PAGE)) {
 
 $content .= ob_get_contents();
 ob_end_clean();
+
+if (isApiRequest()) {
+	jsonResponse(['content' => $content, 'page' => $page, 'status' => 'success']);
+}
 
 // template
 $template_path = 'template/';

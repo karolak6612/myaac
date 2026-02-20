@@ -1,79 +1,29 @@
-Thumbs.db
-.DS_Store
-.idea
+# Frontend
+node_modules/
+build/
+.svelte-kit/
+.env
+.env.*
+!.env.example
+_app/
 
-#
-/.htaccess
-/lua
-
-# composer
-composer.phar
-vendor
-
-# npm
-node_modules
-tools/ext
-
-# cypress
-cypress.env.json
-cypress/e2e/2-advanced-examples
-cypress/screenshots
-
-# created by release.sh
-releases
-tmp
-
+# Backend / Project
+vendor/
+.idea/
+.vscode/
 config.local.php
 config2.local.php
-
-# all custom templates
-templates/*
-!templates/tibiacom
-!templates/kathrine
-
-# guild images
-images/guilds/*
-!images/guilds/default.gif
-
-# editor images
-images/editor/*
-!images/editor/index.html
-
-# gallery images
-images/gallery/*
-!images/gallery/index.html
-!images/gallery/demon.jpg
-!images/gallery/demon_thumb.gif
-
-# cache
 system/cache/*
-!system/cache/index.html
-!system/cache/twig/index.html
-!system/cache/signatures/index.html
-!system/cache/plugins/index.html
-!system/cache/persistent/index.html
-
-# logs
 system/logs/*
-!system/logs/index.html
-
-# data
 system/data/*
-!system/data/index.html
-
-# php sessions
 system/php_sessions/*
-!system/php_sessions/index.html
-
-# plugins
 plugins/*
-!plugins/.htaccess
+templates/*
 !plugins/example.json
-!plugins/account-create-hint.json
-!plugins/account-create-hint
-!plugins/email-confirmed-reward.json
-!plugins/email-confirmed-reward
-landing
-
-# system
-system/functions_custom.php
+!templates/index.html
+!templates/kathrine/
+!templates/tibiacom/
+cypress.env.json
+cypress/screenshots
+*.log
+.php-cs-fixer.cache

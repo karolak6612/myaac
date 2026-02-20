@@ -59,9 +59,21 @@ else {
 				$tmp_vocation = 'Unknown';
 		}
 
-		$spell['vocations'] = implode('<br/>', $vocations);
+		$spell['vocations'] = isApiRequest() ? $vocations : implode('<br/>', $vocations);
 		$spells[] = $spell;
 	}
+}
+
+if (isApiRequest()) {
+	jsonResponse([
+		'spells' => $spells,
+		'vocation_id' => $vocation_id,
+		'vocation' => $vocation,
+		'vocations' => config('vocations'),
+		'config' => [
+			'item_images_url' => setting('core.item_images_url'),
+		]
+	]);
 }
 
 ?>

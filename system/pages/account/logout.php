@@ -13,10 +13,25 @@ $title = 'Logout';
 
 require __DIR__ . '/base.php';
 
+if (isApiRequest() && !isRequestMethod('post')) {
+	jsonResponse(['errors' => ['Method not allowed']], 405);
+}
+
 if(!$logged) {
+	if (isApiRequest()) {
+		jsonResponse(['success' => true, 'message' => 'Not logged in.']);
+	}
 	return;
 }
 
+if (isRequestMethod('post')) {
+	csrfProtect();
+}
+
 require SYSTEM . 'logout.php';
+
+if (isApiRequest()) {
+	jsonResponse(['success' => true, 'message' => 'Logged out successfully.']);
+}
 
 $twig->display('account.logout.html.twig');

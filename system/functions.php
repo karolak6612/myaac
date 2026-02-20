@@ -1133,6 +1133,10 @@ function isValidToken(): bool {
 function csrfProtect(): void
 {
 	if (!isValidToken()) {
+        if (isApiRequest()) {
+            jsonResponse(['error' => 'Invalid CSRF token'], 403);
+        }
+
 		$lastUri = BASE_URL . str_replace_first('/', '', getSession('last_uri'));
 		echo 'Request has been cancelled due to security reasons - token is invalid. Go <a href="' . $lastUri . '">back</a>';
 		exit();
@@ -1763,6 +1767,33 @@ function getStatusUptimeReadable(int $uptime): string
 	$min = floor($uptime / $fullMinute);
 
 	return "{$y}{$m}{$d}{$hours}h {$min}m";
+}
+
+function isApiRequest()
+{
+    if (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) {
+        return true;
+    }
+    if (isset($_GET['api']) && $_GET['api'] == '1') {
+        return true;
+    }
+    return false;
+}
+
+function jsonResponse($data, $status = 200): void
+{
+    http_response_code($status);
+    header('Content-Type: application/json');
+    try {
+        echo json_encode($data, JSON_THROW_ON_ERROR);
+    } catch (JsonException $e) {
+        http_response_code(500);
+        if (defined('MYAAC_DEBUG') && MYAAC_DEBUG) {
+            log_append('error.log', 'JSON encoding error: ' . $e->getMessage());
+        }
+        echo json_encode(['error' => 'JSON encoding error']);
+    }
+    exit;
 }
 
 // validator functions

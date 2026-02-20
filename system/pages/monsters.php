@@ -33,6 +33,10 @@ if (empty($_REQUEST['name'])) {
 		return $monsters;
 	});
 
+	if (isApiRequest()) {
+		jsonResponse(['monsters' => $monsters]);
+	}
+
 	$twig->display('monsters.html.twig', array(
 		'monsters' => $monsters,
 		'preview' => $preview
@@ -83,11 +87,18 @@ if ($monsterModel && isset($monsterModel->name)) {
 	$monster['elements'] = $elements ?? null;
 	$monster['immunities'] = $immunities ?? null;
 
+	if (isApiRequest()) {
+		jsonResponse(['monster' => $monster]);
+	}
+
 	$twig->display('monster.html.twig', array(
 		'monster' => $monster,
 	));
 
 } else {
+	if (isApiRequest()) {
+		jsonResponse(['error' => 'Monster not found'], 404);
+	}
 	echo "Monster with name <b>" . htmlspecialchars($monster_name) . "</b> doesn't exist.";
 }
 

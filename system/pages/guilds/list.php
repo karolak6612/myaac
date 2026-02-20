@@ -34,8 +34,27 @@ if(count($guilds_list) > 0) {
 		}
 
 		$guildName = $guild->getName();
-		$guilds[] = array('name' => $guildName, 'logo' => $guild_logo, 'link' => getGuildLink($guildName, false), 'description' => $description);
+		$guilds[] = array(
+			'name' => $guildName,
+			'logo' => $guild_logo,
+			'link' => getGuildLink($guildName, false),
+			'description' => $description,
+			'logo_url' => getGuildLogoById($guild->getId()),
+			'description_clean' => $guild->getCustomField('description')
+		);
 	}
+}
+
+if (isApiRequest()) {
+	$apiGuilds = array_map(function($g) {
+		return [
+			'name' => $g['name'],
+			'logo' => $g['logo_url'],
+			'link' => $g['link'],
+			'description' => $g['description_clean']
+		];
+	}, $guilds);
+	jsonResponse(['guilds' => $apiGuilds]);
 }
 
 $twig->display('guilds.list.html.twig', array(

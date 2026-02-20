@@ -31,6 +31,7 @@ $vocation = urldecode($_GET['vocation'] ?? 'all');
 if(!is_numeric($page) || $page < 1 || $page > PHP_INT_MAX) {
 	$page = 1;
 }
+$page = (int)$page;
 
 $query = Player::query();
 
@@ -244,12 +245,16 @@ foreach($highscores as $id => &$player)
 			$player['value'] = $player['maglevel'];
 		else if($skill == POT::SKILL__LEVEL) {
 			$player['value'] = $player['level'];
-			$player['experience'] = number_format($player['experience']);
+			if (!isApiRequest()) {
+				$player['experience'] = number_format($player['experience']);
+			}
 		}
 
 		$player['link'] = getPlayerLink($player['name'], false);
-		$player['flag'] = getFlagImage($player['country']);
-		$player['outfit'] = '<img style="position:absolute;margin-top:-50px;margin-left:-30px" src="' . $player['outfit_url'] . '" alt="" />';
+		if (!isApiRequest()) {
+			$player['flag'] = getFlagImage($player['country']);
+			$player['outfit'] = '<img style="position:absolute;margin-top:-50px;margin-left:-30px" src="' . $player['outfit_url'] . '" alt="" />';
+		}
 
 		if ($skill != POT::SKILL__LEVEL) {
 			if (isset($lastValue) && $lastValue == $player['value']) {
@@ -304,6 +309,21 @@ if(setting('core.highscores_frags')) {
 }
 if(setting('core.highscores_balance'))
 	$types['balance'] = 'Balance';
+
+if (isApiRequest()) {
+	jsonResponse([
+		'highscores' => $highscores,
+		'list' => $list,
+		'skill' => $skill,
+		'page' => $page,
+		'totalResults' => $totalResults,
+		'types' => $types,
+		'vocations' => config('vocations'),
+		'vocation' => $vocation,
+		'updatedAt' => $updatedAt ?? time(),
+		'perPage' => $configHighscoresPerPage
+	]);
+}
 
 if ($highscoresTTL > 0 && $cache->enabled()) {
 	echo '<small>*Note: Highscores are updated every' . ($highscoresTTL > 1 ? ' ' . $highscoresTTL : '') . ' minute' . ($highscoresTTL > 1 ? 's' : '') . '.</small><br/><br/>';
